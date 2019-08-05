@@ -13,10 +13,11 @@ git clone https://github.com/bobbydilley/JVSCore
 cd JVSCore
 make
 sudo make install
-sudo systemctl enable jvscore
 ```
 
 ## Cable
+
+> ATTENTION! THIS MAY BE INCORRECT. PLEASE RESEAERCH HOW TO MAKE THE CABLE YOURSELF.
 
 The below table explains how to connect up the cable
 
@@ -29,12 +30,4 @@ The below table explains how to connect up the cable
 
 ## Usage
 
-JVSCore runs as a background systemd service, and requires no interaction once installed and started. I/O boards are polled for every 30 seconds by default if one isn't already connected. Simply connect the I/O board, and a device will appear within the polling time named after the device name the board sends.
-
-## Compatibility
-
-This is known to work with:
-
-- MAME
-- Demul
-- Vivanono
+At the moment you have to start jvscore, as there is no system service. After its installed you can just run `jvscore`.
