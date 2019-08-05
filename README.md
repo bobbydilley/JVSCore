@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.com/bobbydilley/JVSCore.svg?token=Sqw3TCAEj9AkhMEZATKM&branch=master)](https://travis-ci.com/bobbydilley/JVSCore)
 
 # JVSCore
 
