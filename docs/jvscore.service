@@ -1,0 +1,10 @@
+[Unit]
+Description=JVSCore Device Driver Service
+
+[Service]
+User=root
+Type=simple
+ExecStart=/usr/bin/jvscore
+
+[Install]
+WantedBy=multi-user.target
