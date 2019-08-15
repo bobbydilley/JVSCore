@@ -34,3 +34,5 @@ The below table explains how to connect up the cable
 Once JVSCore has been enabled with `sudo systemctl enable jvscore` it will start when the system loads, and connect to the I/O at bootup. Make sure the I/O is connected before powering on the machine.
 
 To start JVSCore in the terminal to view debug messages, you can start it by running `sudo ./usr/bin/jvscore`.
+
+The RS485 converter device path is set in `/etc/jvscore.conf`. You will need to be root to edit this file, so something like `sudo vim jvscore.conf` is required.
