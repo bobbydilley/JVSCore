@@ -15,6 +15,7 @@
 
 #include "input.h"
 #include "jvs.h"
+#include "config.h"
 
 int main(int argc, char **argv);
 

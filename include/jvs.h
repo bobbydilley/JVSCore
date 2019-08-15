@@ -14,6 +14,7 @@
 #include <sys/ioctl.h>
 
 #include "constants.h"
+#include "config.h"
 
 typedef struct
 {

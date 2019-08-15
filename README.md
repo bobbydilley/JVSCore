@@ -13,6 +13,7 @@ git clone https://github.com/bobbydilley/JVSCore
 cd JVSCore
 make
 sudo make install
+sudo systemctl enable jvscore
 ```
 
 ## Cable
@@ -30,4 +31,6 @@ The below table explains how to connect up the cable
 
 ## Usage
 
-At the moment you have to start jvscore, as there is no system service. After its installed you can just run `jvscore`.
+Once JVSCore has been enabled with `sudo systemctl enable jvscore` it will start when the system loads, and connect to the I/O at bootup. Make sure the I/O is connected before powering on the machine.
+
+To start JVSCore in the terminal to view debug messages, you can start it by running `sudo ./usr/bin/jvscore`.

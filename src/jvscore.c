@@ -5,6 +5,8 @@ int main(int argc, char **argv)
     printf("JVSCore 1.0\n");
     struct uinput_setup usetup;
 
+    parseConfig("/etc/jvscore.conf");
+
     if (!connectJVS())
     {
         printf("Error connecting to serial\n");

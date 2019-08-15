@@ -4,8 +4,6 @@ int serialIO = -1;
 
 int connectJVS()
 {
-	char *devicePath = "/dev/pts/6";
-
 	if ((serialIO = open(devicePath, O_RDWR | O_NOCTTY | O_SYNC)) < 0)
 	{
 		printf("Failed to open %s\n", devicePath);

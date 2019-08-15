@@ -25,12 +25,15 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 install:
 	@echo " Installing"
 	@echo "  cp $(TARGET) /usr/bin/jvscore"; cp $(TARGET) /usr/$(TARGET)
-	@echo "  cp -n docs/jvscore.conf /etc/jvscore.conf"; cp -n docs/jvscore.conf /etc/jvscore.conf
+	@echo "  cp -n docs/jvscore.conf /etc/."; cp -n docs/jvscore.conf /etc/.
+	@echo "  cp -n docs/jvscore.service /etc/systemd/system/."; cp -n docs/jvscore.service /etc/systemd/system/.
+	@echo "  chmod 644 /etc/systemd/system/jvscore.service"; chmod 644 /etc/systemd/system/jvscore.service
 
 uninstall:
 	@echo " Removing"
 	@echo "  rm -f /usr/bin/jvscore"; rm -f /usr/bin/jvscore
 	@echo "  rm -f /etc/jvscore.conf"; rm -f /etc/jvscore.conf
+	@echo "  rm -f /etc/systemd/system/jvscore.service"; rm -f /etc/systemd/system/jvscore.service
 
 clean:
 	@echo " Cleaning";
