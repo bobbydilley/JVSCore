@@ -18,16 +18,16 @@ sudo systemctl enable jvscore
 
 ## Cable
 
-> ATTENTION! THIS MAY BE INCORRECT. PLEASE RESEAERCH HOW TO MAKE THE CABLE YOURSELF.
-
 The below table explains how to connect up the cable
 
 |JVS RS485|Arcade USB|
 |---|---|
-|A|DATA-|
-|B|DATA+|
+|B-|DATA-|
+|A+|DATA+|
 |GND|VCC|
 |GND|GND|
+
+> It is always a good idea to research how this cable works before creating it. I'm not responsible for any damage you may cause by creating this wrong.
 
 ## Usage
 
