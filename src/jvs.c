@@ -31,6 +31,8 @@ int resetJVS()
 		return -1;
 	}
 
+	usleep(1000 * 1000);
+
 	/* Assign the I/O device ID 0x01 */
 	unsigned char deviceAssignData[] = {CMD_ASSIGN_ADDR, DEVICE_ID};
 	packet.length = 2;
@@ -150,63 +152,22 @@ int runCommand(JVSPacket *packet, JVSPacket *returnedPacket)
 		printf("Report Error - Error with this command in particular");
 		return 0;
 	}
-
+	usleep(10 * 1000);
 	return 1;
 }
 
 unsigned char readByte()
 {
-	unsigned char buffer[] = {
-		0x00};
-
-	int n = -1;
-
-	while (n < 1)
-	{
-		n = read(serialIO, buffer, 1);
-	}
-	usleep(50);
-
-	if (buffer[0] == ESCAPE)
-	{
-		n = -1;
-		while (n < 1)
-		{
-			n = read(serialIO, buffer, 1);
-		}
-		usleep(50);
-
-		return buffer[0] + 1;
-	}
-
+	char buffer[] = {0x00};
+	int n = read(serialIO, buffer, sizeof(buffer));
 	return buffer[0];
 }
 
 void writeByte(unsigned char byte)
 {
-	if (byte == SYNC || byte == ESCAPE)
-	{
-		unsigned char buffer[] = {
-			ESCAPE};
-
-		usleep(50);
-
-		int n = write(serialIO, buffer, sizeof(buffer));
-		if (n != 1)
-		{
-			printf("Error from write: %d, %d\n", n, errno);
-		}
-		byte -= 1;
-	}
-
-	unsigned char buffer[] = {
-		byte};
-	usleep(50);
+	char buffer[] = {0x00};
+	buffer[0] = byte;
 	int n = write(serialIO, buffer, sizeof(buffer));
-	if (n != 1)
-	{
-		printf("Error from write: %d, %d\n", n, errno);
-	}
 }
 
 int readPacket(JVSPacket *packet)
@@ -225,6 +186,10 @@ int readPacket(JVSPacket *packet)
 	for (int i = 0; i < packet->length - 1; i++)
 	{
 		packet->data[i] = readByte();
+		if (packet->data[i] == ESCAPE)
+		{
+			packet->data[i] = readByte() + 1;
+		}
 		checksumComputed = (checksumComputed + packet->data[i]) & 0xFF;
 	}
 	unsigned char checksumReceived = readByte();
@@ -246,7 +211,15 @@ int writePacket(JVSPacket *packet)
 	unsigned char checksum = packet->destination + packet->length + 1;
 	for (int i = 0; i < packet->length; i++)
 	{
-		writeByte(packet->data[i]);
+		if (packet->data[i] == SYNC || packet->data[i] == ESCAPE)
+		{
+			writeByte(ESCAPE);
+			writeByte(packet->data[i] - 1);
+		}
+		else
+		{
+			writeByte(packet->data[i]);
+		}
 		checksum = (checksum + packet->data[i]) & 0xFF;
 	}
 	writeByte(checksum);
@@ -284,7 +257,7 @@ int setSerialAttributes(int fd, int myBaud)
 
 	ioctl(fd, TIOCMSET, &status);
 
-	usleep(10000); // 10mS
+	usleep(100 * 1000); // 10mS
 
 	return 0;
 }
