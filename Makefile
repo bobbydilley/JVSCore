@@ -26,6 +26,7 @@ install:
 	@echo " Installing"
 	@echo "  cp $(TARGET) /usr/bin/jvscore"; cp $(TARGET) /usr/$(TARGET)
 	@echo "  cp -n docs/jvscore.conf /etc/."; cp -n docs/jvscore.conf /etc/.
+	@echo "  chmod 777 /etc/jvscore.conf"; chmod 777 /etc/jvscore.conf
 	@echo "  cp -n docs/jvscore.service /etc/systemd/system/."; cp -n docs/jvscore.service /etc/systemd/system/.
 	@echo "  chmod 644 /etc/systemd/system/jvscore.service"; chmod 644 /etc/systemd/system/jvscore.service
 
