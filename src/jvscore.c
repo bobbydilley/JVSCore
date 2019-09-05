@@ -29,6 +29,7 @@ int main(int argc, char **argv)
     printf("Device Connected\n");
     printf("  Players: %d\n", capabilities.players);
     printf("  Switches: %d\n", capabilities.switches);
+    printf("  Analogue: %d (%d bits)\n", capabilities.analogueInChannels, capabilities.analogueInBits);
 
     char name[1024];
     if (!getName(name))

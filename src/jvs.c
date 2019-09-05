@@ -123,6 +123,10 @@ int getCapabilities(JVSCapabilities *capabilities)
 			capabilities->players = returnedPacket.data[i + 1];
 			capabilities->switches = returnedPacket.data[i + 2];
 			break;
+		case CAP_ANALOG_IN:
+			capabilities->analogueInChannels = returnedPacket.data[i + 1];
+			capabilities->analogueInBits = returnedPacket.data[i + 1];
+			break;
 		}
 		i += 4;
 	}
