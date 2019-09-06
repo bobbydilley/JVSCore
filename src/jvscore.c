@@ -19,17 +19,12 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    JVSCapabilities capabilities;
+    JVSCapabilities capabilities = {0};
     if (!getCapabilities(&capabilities))
     {
         printf("Error getting capabilities...\n");
         return 1;
     }
-
-    printf("Device Connected\n");
-    printf("  Players: %d\n", capabilities.players);
-    printf("  Switches: %d\n", capabilities.switches);
-    printf("  Analogue: %d (%d bits)\n", capabilities.analogueInChannels, capabilities.analogueInBits);
 
     char name[1024];
     if (!getName(name))
@@ -37,6 +32,14 @@ int main(int argc, char **argv)
         printf("Error getting name...\n");
         return 1;
     }
+
+    printf("Device Connected: %s\n", name);
+    printf("  Players: %d\n", capabilities.players);
+    printf("  Switches: %d\n", capabilities.switches);
+    printf("  Coins: %d\n", capabilities.coins);
+    printf("  Analogue: %d (%d bits)\n", capabilities.analogueInChannels, capabilities.analogueInBits);
+    printf("  Rotary: %d\n", capabilities.rotaryChannels);
+    printf("  Backup: %d\n", capabilities.backup);
 
     int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
 
@@ -61,6 +64,13 @@ int main(int argc, char **argv)
 
         char switches[2 * capabilities.players];
         if (!getSwitches(switches, capabilities.players))
+        {
+            printf("Error getting switches...\n");
+            break;
+        }
+
+        char analogues[2 * capabilities.analogueInChannels];
+        if (!getAnalogue(analogues, capabilities.analogueInChannels))
         {
             printf("Error getting switches...\n");
             break;

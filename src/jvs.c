@@ -70,6 +70,30 @@ int getSwitches(char *switches, int players)
 	return 1;
 }
 
+int getAnalogue(char *analogues, int channels)
+{
+	JVSPacket packet;
+	JVSPacket returnedPacket;
+	packet.destination = DEVICE_ID;
+
+	unsigned char data[] = {CMD_READ_ANALOGS, channels};
+	packet.length = 2;
+	memcpy(packet.data, data, packet.length);
+	if (!runCommand(&packet, &returnedPacket))
+	{
+		printf("Failed to send analogue question to device\n");
+		return 0;
+	}
+
+	int i = 2;
+	while (i < returnedPacket.length)
+	{
+		analogues[i - 2] = returnedPacket.data[i];
+		i++;
+	}
+	return 1;
+}
+
 int getName(char *name)
 {
 	JVSPacket packet;
@@ -112,6 +136,7 @@ int getCapabilities(JVSCapabilities *capabilities)
 
 	int i = 2;
 	int finished = 0;
+
 	while (!finished && i < returnedPacket.length)
 	{
 		switch (returnedPacket.data[i])
@@ -126,6 +151,43 @@ int getCapabilities(JVSCapabilities *capabilities)
 		case CAP_ANALOG_IN:
 			capabilities->analogueInChannels = returnedPacket.data[i + 1];
 			capabilities->analogueInBits = returnedPacket.data[i + 1];
+			break;
+		case CAP_COINS:
+			capabilities->coins = returnedPacket.data[i + 1];
+			break;
+		case CAP_ROTARY:
+			capabilities->rotaryChannels = returnedPacket.data[i + 1];
+			break;
+		case CAP_KEYPAD:
+			capabilities->keypad = 1;
+			break;
+		case CAP_LIGHTGUN:
+			capabilities->gunXBits = returnedPacket.data[i + 1];
+			capabilities->gunYBits = returnedPacket.data[i + 2];
+			capabilities->gunChannels = returnedPacket.data[i + 3];
+			break;
+		case CAP_GPI:
+			capabilities->generalPurposeOutputs = returnedPacket.data[i + 1] << 8 | returnedPacket.data[i + 2];
+			break;
+		case CAP_CARD:
+			capabilities->card = returnedPacket.data[i + 1];
+			break;
+		case CAP_HOPPER:
+			capabilities->hopper = returnedPacket.data[i + 1];
+			break;
+		case CAP_GPO:
+			capabilities->generalPurposeOutputs = returnedPacket.data[i + 1];
+			break;
+		case CAP_ANALOG_OUT:
+			capabilities->analogueOutChannels = returnedPacket.data[i + 1];
+			break;
+		case CAP_DISPLAY:
+			capabilities->displayOutColumns = returnedPacket.data[i + 1];
+			capabilities->displayOutRows = returnedPacket.data[i + 2];
+			capabilities->displayOutEncodings = returnedPacket.data[i + 3];
+			break;
+		case CAP_BACKUP:
+			capabilities->backup = 1;
 			break;
 		}
 		i += 4;
