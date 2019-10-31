@@ -37,8 +37,16 @@ int main(int argc, char **argv)
     printf("  Players: %d\n", capabilities.players);
     printf("  Switches: %d\n", capabilities.switches);
     printf("  Coins: %d\n", capabilities.coins);
-    printf("  Analogue: %d (%d bits)\n", capabilities.analogueInChannels, capabilities.analogueInBits);
+    printf("  Analogue Inputs: %d channels, %d bits\n", capabilities.analogueInChannels, capabilities.analogueInBits);
+    printf("  Analogue Outputs: %d channels\n", capabilities.analogueOutChannels);
     printf("  Rotary: %d\n", capabilities.rotaryChannels);
+    printf("  Keypad: $d\n", capabilities.keypad);
+    printf("  Lightgun: $d x-bits, %d y-bits, $d channels\n", capabilities.gunXBits, capabilities.gunYBits, capabilities.gunChannels);
+    printf("  General Purpose Outputs: %d\n", capabilities.generalPurposeOutputs);
+    printf("  General Purpose Inputs: %d\n", capabilities.generalPurposeInputs);
+    printf("  Card: %d\n", capabilities.card);
+    printf("  Hopper: %d\n", capabilities.hopper);
+    printf("  Display: %d rows, %d columns, %d encodings\n", capabilities.displayOutRows, capabilities.displayOutColumns, capabilities.displayOutEncodings);
     printf("  Backup: %d\n", capabilities.backup);
 
     int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
@@ -49,11 +57,24 @@ int main(int argc, char **argv)
         ioctl(fd, UI_SET_KEYBIT, 2 + i);
     }
 
+    for (int i = 0; i < capabilities.analogueInChannels; i++)
+    {
+        ioctl(fd, UI_SET_ABSBIT, i);
+    }
+
     memset(&usetup, 0, sizeof(usetup));
     usetup.id.bustype = BUS_USB;
     usetup.id.vendor = 0x8371;  /* sample vendor */
     usetup.id.product = 0x3551; /* sample product */
     strcpy(usetup.name, name);  //"SEGA ENTERPRISESLTD.;I/O BD JVS;837-13551;Ver1.00;98/10"
+
+    for (int i = 0; i < capabilities.analogueInChannels; i++)
+    {
+        usetup.absmin[i] = 0;
+        usetup.absmax[i] = (2 ^ capabilities.analogueInBits) - 1;
+        usetup.absfuzz[i] = 0;
+        usetup.absflat[i] = 0;
+    }
 
     ioctl(fd, UI_DEV_SETUP, &usetup);
     ioctl(fd, UI_DEV_CREATE);
@@ -79,7 +100,14 @@ int main(int argc, char **argv)
         for (int i = 0; i < 2 * capabilities.players; i++)
         {
             for (int j = 7; 0 <= j; j--)
+            {
                 emit(fd, EV_KEY, 2 + (i * 8) + j, (switches[i] >> j) & 0x01);
+            }
+        }
+
+        for (int i = 0; i < capabilities.analogueInChannels; i++)
+        {
+            emit(fd, EV_ABS, i, analogues[i]);
         }
 
         emit(fd, EV_SYN, SYN_REPORT, 0);
