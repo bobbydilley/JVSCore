@@ -29,9 +29,8 @@ int parseConfig(char *filePath)
     }
     else
     {
-        printf("Error: Failed to open config file at %s\n", filePath);
-        return -1;
+        return 0;
     }
     fclose(fp);
-    return 0;
+    return 1;
 }

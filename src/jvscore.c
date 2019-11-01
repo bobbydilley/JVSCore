@@ -4,8 +4,12 @@ int main(int argc, char **argv)
 {
     printf("JVSCore 1.0\n");
     struct uinput_setup usetup;
+    char *configFilePath = "/etc/jvscore.conf";
 
-    parseConfig("/etc/jvscore.conf");
+    if (!parseConfig(configFilePath))
+    {
+        printf("Failed to open config file at %s, using default values.\n", configFilePath);
+    }
 
     if (!connectJVS())
     {
@@ -15,7 +19,7 @@ int main(int argc, char **argv)
 
     if (!resetJVS())
     {
-        printf("Error resetting jvs...\n");
+        printf("Error resetting jvs\n");
         return 1;
     }
 
@@ -29,7 +33,7 @@ int main(int argc, char **argv)
     char name[1024];
     if (!getName(name))
     {
-        printf("Error getting name...\n");
+        printf("Error getting name of IO board\n");
         return 1;
     }
 
