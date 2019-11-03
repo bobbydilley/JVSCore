@@ -74,7 +74,8 @@ int main(int argc, char **argv)
     }
 
     ioctl(fd, UI_SET_EVBIT, EV_ABS);
-    ioctl(fd, UI_SET_ABSBIT, ABS_X);
+
+       ioctl(fd, UI_SET_ABSBIT, ABS_X);
     ioctl(fd, UI_SET_ABSBIT, ABS_Y);
     ioctl(fd, UI_SET_ABSBIT, ABS_Z);
     ioctl(fd, UI_SET_ABSBIT, ABS_RX);
