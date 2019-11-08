@@ -40,7 +40,7 @@ int resetJVS()
 	if (!runCommand(&packet, &returnedPacket))
 	{
 		printf("Failed to assign ID to device\n");
-		return -1;
+		return 0;
 	}
 
 	return 1;
@@ -199,11 +199,16 @@ int runCommand(JVSPacket *packet, JVSPacket *returnedPacket)
 {
 
 	writePacket(packet);
-	readPacket(returnedPacket);
+
+	if (!readPacket(returnedPacket))
+	{
+		printf("Timeout Error - The device did not reply in time\n");
+		return 0;
+	}
 
 	if (returnedPacket->destination != BUS_MASTER)
 	{
-		printf("This packet is supposed to be for us but it's not\n");
+		printf("Destination Error - This packet is supposed to be for us but it's not\n");
 		return 0;
 	}
 
@@ -239,9 +244,16 @@ void writeByte(unsigned char byte)
 int readPacket(JVSPacket *packet)
 {
 	unsigned char byte = 0;
-	while (byte != SYNC)
+	int timeout = 3;
+	while (byte != SYNC && timeout > 0)
 	{
 		byte = readByte();
+		timeout -= 1;
+	}
+
+	if (timeout == 0)
+	{
+		return 0;
 	}
 
 	packet->destination = readByte();
