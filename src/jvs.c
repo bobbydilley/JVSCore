@@ -115,7 +115,7 @@ int getName(char *name)
 		name[i - 2] = returnedPacket.data[i];
 		i++;
 	}
-	name[i + 2] = '\0';
+	name[i - 2] = '\0';
 	return 1;
 }
 
