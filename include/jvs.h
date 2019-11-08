@@ -56,9 +56,10 @@ int runCommand(JVSPacket *packet, JVSPacket *returnedPacket);
 
 int resetJVS();
 int getCapabilities(JVSCapabilities *capabilities);
-int getSwitches(char *switches, int players);
+int getSwitches(char *switches, int players, int bytes);
 int getAnalogue(char *analogues, int channels);
 int getName(char *name);
 int getJVSVersion();
 int getCommsVersion();
+int getCoins();
 #endif // JVS_H_

@@ -70,10 +70,10 @@ int main(int argc, char **argv)
     }
 
     ioctl(fd, UI_SET_EVBIT, EV_ABS);
-    ioctl(fd, UI_SET_ABSBIT, ABS_X);
-    ioctl(fd, UI_SET_ABSBIT, ABS_Y);
-    ioctl(fd, UI_SET_ABSBIT, ABS_Z);
-    ioctl(fd, UI_SET_ABSBIT, ABS_RX);
+    for (int i = 0; i < capabilities.analogueInChannels; i++)
+    {
+        ioctl(fd, UI_SET_ABSBIT, i);
+    }
 
     memset(&usetup, 0, sizeof(usetup));
     usetup.id.bustype = BUS_USB;
@@ -82,14 +82,13 @@ int main(int argc, char **argv)
     usetup.id.version = 1;
     strcpy(usetup.name, name); //"SEGA ENTERPRISESLTD.;I/O BD JVS;837-13551;Ver1.00;98/10"
 
-    usetup.absmin[ABS_X] = 43;
-    usetup.absmax[ABS_X] = 225;
-    usetup.absfuzz[ABS_X] = 0;
-    usetup.absflat[ABS_X] = 0;
-    usetup.absmin[ABS_Y] = 25;
-    usetup.absmax[ABS_Y] = 250;
-    usetup.absfuzz[ABS_Y] = 0;
-    usetup.absflat[ABS_Y] = 0;
+    for (int i = 0; i < capabilities.analogueInChannels; i++)
+    {
+        usetup.absmin[i] = 0;
+        usetup.absmax[i] = pow(2, capabilities.analogueInBits) - 1;
+        usetup.absfuzz[i] = 0;
+        usetup.absflat[i] = 0;
+    }
 
     if (write(fd, &usetup, sizeof(usetup)) < 0)
         return -1;
@@ -102,15 +101,17 @@ int main(int argc, char **argv)
     int running = 1;
     while (running)
     {
+        div_t switchDiv = div(capabilities.switches, 8);
+        int switchBytes = switchDiv.quot + (switchDiv.rem ? 1 : 0);
 
-        char switches[2 * capabilities.players];
-        if (!getSwitches(switches, capabilities.players))
+        char switches[switchBytes * capabilities.players];
+        if (!getSwitches(switches, capabilities.players, switchBytes))
         {
             printf("Error getting switches...\n");
             break;
         }
 
-        char analogues[1 * capabilities.analogueInChannels];
+        char analogues[2 * capabilities.analogueInChannels];
         if (!getAnalogue(analogues, capabilities.analogueInChannels))
         {
             printf("Error getting switches...\n");
@@ -121,28 +122,14 @@ int main(int argc, char **argv)
         {
             for (int j = 7; 0 <= j; j--)
             {
-                //printf("%d %d\n", (i * 8) + j, (switches[i] >> j) & 0x01);
-            }
-        }
-
-        for (int i = 0; i < 2 * capabilities.analogueInChannels; i += 2)
-        {
-            //printf("%d\n", analogues[i] & 0xFF);
-        }
-        //printf("\n");
-
-        for (int i = 0; i < 2 * capabilities.players; i++)
-        {
-            for (int j = 7; 0 <= j; j--)
-            {
                 emit(fd, EV_KEY, 2 + (i * 8) + j, (switches[i] >> j) & 0x01);
             }
         }
 
-        emit(fd, EV_ABS, ABS_X, 225 - (analogues[0] & 0xFF));
-        emit(fd, EV_ABS, ABS_Y, 250 - (analogues[2] & 0xFF));
-        //emit(fd, EV_ABS, ABS_X, analogues[4] & 0xFF);
-        //emit(fd, EV_ABS, ABS_Y, analogues[6] & 0xFF);
+        for (int i = 0; i < capabilities.analogueInChannels; i++)
+        {
+            emit(fd, EV_ABS, i, ((analogues[(i * 2) + 1] & 0xFF) << 8) + (analogues[(i * 2)] & 0xFF));
+        }
 
         emit(fd, EV_SYN, SYN_REPORT, 0);
 

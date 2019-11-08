@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <math.h>
 
 #include "input.h"
 #include "jvs.h"

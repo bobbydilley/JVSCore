@@ -9,7 +9,7 @@ SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 CFLAGS := -std=gnu99
 DEFINES :=
-LIB := -pthread
+LIB := -pthread -lm
 INC := -I include
 
 $(TARGET): $(OBJECTS)

@@ -46,13 +46,13 @@ int resetJVS()
 	return 1;
 }
 
-int getSwitches(char *switches, int players)
+int getSwitches(char *switches, int players, int bytes)
 {
 	JVSPacket packet;
 	JVSPacket returnedPacket;
 	packet.destination = DEVICE_ID;
 
-	unsigned char data[] = {CMD_READ_SWITCHES, players, 2};
+	unsigned char data[] = {CMD_READ_SWITCHES, players, bytes};
 	packet.length = 3;
 	memcpy(packet.data, data, packet.length);
 	if (!runCommand(&packet, &returnedPacket))
@@ -110,12 +110,12 @@ int getName(char *name)
 	}
 
 	int i = 2;
-	while (i < returnedPacket.length && returnedPacket.data[i] != 0x00)
+	while (i < returnedPacket.length && returnedPacket.data[i] != '\0')
 	{
 		name[i - 2] = returnedPacket.data[i];
 		i++;
 	}
-	name[i + 2] = 0x00;
+	name[i + 2] = '\0';
 	return 1;
 }
 
