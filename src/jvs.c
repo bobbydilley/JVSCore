@@ -200,7 +200,8 @@ int runCommand(JVSPacket *packet, JVSPacket *returnedPacket)
 
 	writePacket(packet);
 
-	if (!readPacket(returnedPacket))
+	int readPacketResponse = readPacket(returnedPacket);
+	if (readPacketResponse == -1)
 	{
 		printf("Timeout Error - The device did not reply in time\n");
 		return 0;
@@ -257,7 +258,7 @@ int readPacket(JVSPacket *packet)
 
 	if (timeout == 0)
 	{
-		return 0;
+		return -1;
 	}
 
 	packet->destination = readByte();
@@ -278,7 +279,7 @@ int readPacket(JVSPacket *packet)
 
 	if (checksumReceived != checksumComputed)
 	{
-		printf("Error checksum is not correct.\n");
+		printf("Checksum Error - The checksum is not correct\n");
 		return 0;
 	}
 
