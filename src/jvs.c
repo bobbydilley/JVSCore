@@ -248,6 +248,10 @@ int readPacket(JVSPacket *packet)
 	while (byte != SYNC && timeout > 0)
 	{
 		byte = readByte();
+		if (byte != 0x00)
+		{
+			timeout = 3;
+		}
 		timeout -= 1;
 	}
 
