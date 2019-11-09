@@ -150,7 +150,7 @@ int getCapabilities(JVSCapabilities *capabilities)
 			break;
 		case CAP_ANALOG_IN:
 			capabilities->analogueInChannels = returnedPacket.data[i + 1];
-			capabilities->analogueInBits = returnedPacket.data[i + 1];
+			capabilities->analogueInBits = returnedPacket.data[i + 2] ? returnedPacket.data[i + 2] : 8;
 			break;
 		case CAP_COINS:
 			capabilities->coins = returnedPacket.data[i + 1];
@@ -228,32 +228,29 @@ int runCommand(JVSPacket *packet, JVSPacket *returnedPacket)
 	return 1;
 }
 
-unsigned char readByte()
+int readByte(unsigned char *byte)
 {
-	char buffer[] = {0x00};
-	int n = read(serialIO, buffer, sizeof(buffer));
-	return buffer[0];
+	return read(serialIO, byte, 1);
 }
 
-void writeByte(unsigned char byte)
+int writeByte(unsigned char byte)
 {
 	char buffer[] = {0x00};
 	buffer[0] = byte;
-	int n = write(serialIO, buffer, sizeof(buffer));
+	return write(serialIO, buffer, sizeof(buffer));
 }
 
 int readPacket(JVSPacket *packet)
 {
 	unsigned char byte = 0;
-	int timeout = 3;
+	int timeout = 5;
 	while (byte != SYNC && timeout > 0)
 	{
-		byte = readByte();
-		if (byte != 0x00)
+		int n = readByte(&byte);
+		if (n == 0)
 		{
-			timeout = 3;
+			timeout -= 1;
 		}
-		timeout -= 1;
 	}
 
 	if (timeout == 0)
@@ -261,21 +258,23 @@ int readPacket(JVSPacket *packet)
 		return -1;
 	}
 
-	packet->destination = readByte();
-	packet->length = readByte();
+	readByte(&packet->destination);
+	readByte(&packet->length);
 
 	unsigned char checksumComputed = packet->destination + packet->length;
 
 	for (int i = 0; i < packet->length - 1; i++)
 	{
-		packet->data[i] = readByte();
+		readByte(&packet->data[i]);
 		if (packet->data[i] == ESCAPE)
 		{
-			packet->data[i] = readByte() + 1;
+			readByte(&packet->data[i]);
+			packet->data[i] += 1;
 		}
 		checksumComputed = (checksumComputed + packet->data[i]) & 0xFF;
 	}
-	unsigned char checksumReceived = readByte();
+	unsigned char checksumReceived = 0;
+	readByte(&checksumReceived);
 
 	if (checksumReceived != checksumComputed)
 	{

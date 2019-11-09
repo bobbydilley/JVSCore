@@ -132,7 +132,7 @@ int main(int argc, char **argv)
 
         for (int i = 0; i < capabilities.analogueInChannels; i++)
         {
-            emit(fd, EV_ABS, i, ((analogues[(i * 2) + 1] & 0xFF) << 8) + (analogues[(i * 2)] & 0xFF));
+            emit(fd, EV_ABS, i, ((analogues[(i * 2) + 1] & 0xFF) << (capabilities.analogueInChannels - 8)) + (analogues[(i * 2)] & 0xFF));
         }
 
         emit(fd, EV_SYN, SYN_REPORT, 0);
