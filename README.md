@@ -1,4 +1,4 @@
-[![Actions Status](https://github.com/bobbydilley/JVSCore-Public/workflows/Makefile/badge.svg)](https://github.com/bobbydilley/JVSCore-Public/actions)
+[![Actions Status](https://github.com/bobbydilley/JVSCore-Public/workflows/Build/badge.svg)](https://github.com/bobbydilley/JVSCore-Public/actions)
 
 # JVSCore
 
