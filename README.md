@@ -1,3 +1,4 @@
+[![Actions Status](https://github.com/bobbydilley/JVSCore-Public/workflows/ccpp/badge.svg)](https://github.com/bobbydilley/JVSCore-Public/actions)
 
 # JVSCore
 
