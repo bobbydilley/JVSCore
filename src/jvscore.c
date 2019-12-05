@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
 
     ioctl(fd, UI_SET_EVBIT, EV_KEY);
-    for (int i = 0; i < capabilities.switches * capabilities.players; i++)
+    for (int i = 0; i < capabilities.switches * capabilities.players + 8; i++)
     {
         ioctl(fd, UI_SET_KEYBIT, 2 + i);
     }
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
         div_t switchDiv = div(capabilities.switches, 8);
         int switchBytes = switchDiv.quot + (switchDiv.rem ? 1 : 0);
 
-        char switches[switchBytes * capabilities.players];
+        char switches[switchBytes * capabilities.players + 8];
         if (!getSwitches(switches, capabilities.players, switchBytes))
         {
             printf("Error getting switches...\n");
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
             break;
         }
 
-        for (int i = 0; i < switchBytes * capabilities.players; i++)
+        for (int i = 0; i < switchBytes * capabilities.players + 8; i++)
         {
             for (int j = 7; 0 <= j; j--)
             {
