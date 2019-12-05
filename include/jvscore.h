@@ -20,7 +20,7 @@
 
 int switchMappings[] = {BTN_DPAD_UP, BTN_DPAD_DOWN, BTN_DPAD_LEFT, BTN_DPAD_RIGHT, BTN_1, BTN_2, BTN_3, BTN_4, BTN_5, BTN_NORTH, BTN_EAST, BTN_SOUTH, BTN_WEST, BTN_A, BTN_B, BTN_C};
 int drivingMappings[] = {BTN_A, BTN_B, BTN_C};
-int shootingMappings = {BTN_A, BTN_B, BTN_C};
+int shootingMappings[] = {BTN_A, BTN_B, BTN_C};
 
 int main(int argc, char **argv);
 
