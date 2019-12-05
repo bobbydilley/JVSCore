@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 extern char devicePath[];
+extern int analogueFuzz;
 
 int parseConfig(char *filePath);
 

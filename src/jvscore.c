@@ -81,16 +81,16 @@ int main(int argc, char **argv)
 
     memset(&usetup, 0, sizeof(usetup));
     usetup.id.bustype = BUS_USB;
-    usetup.id.vendor = 0x8371;  /* sample vendor */
-    usetup.id.product = 0x3551; /* sample product */
+    usetup.id.vendor = 0x8371;
+    usetup.id.product = 0x3551;
     usetup.id.version = 1;
-    strcpy(usetup.name, name); //"SEGA ENTERPRISESLTD.;I/O BD JVS;837-13551;Ver1.00;98/10"
+    strcpy(usetup.name, name);
 
     for (int i = 0; i < capabilities.analogueInChannels; i++)
     {
         usetup.absmin[i] = 0;
         usetup.absmax[i] = pow(2, capabilities.analogueInBits) - 1;
-        usetup.absfuzz[i] = 0;
+        usetup.absfuzz[i] = analogueFuzz;
         usetup.absflat[i] = 0;
     }
 
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
             break;
         }
 
-        for (int i = 0; i < 2 * capabilities.players; i++)
+        for (int i = 0; i < switchBytes * capabilities.players; i++)
         {
             for (int j = 7; 0 <= j; j--)
             {

@@ -1,6 +1,7 @@
 #include "config.h"
 
 char devicePath[2024] = "/dev/ttyUSB0";
+int analogueFuzz = 2;
 
 int parseConfig(char *filePath)
 {
@@ -22,6 +23,15 @@ int parseConfig(char *filePath)
                     if (token[strlen(token) - 1] == '\n')
                         token[strlen(token) - 1] = '\0';
                     strcpy(devicePath, token);
+                }
+
+                /* Grab the Fuzz Settings */
+                if (strcmp(token, "ANALOGUE_FUZZ") == 0)
+                {
+                    token = strtok(NULL, " ");
+                    if (token[strlen(token) - 1] == '\n')
+                        token[strlen(token) - 1] = '\0';
+                    analogueFuzz = atoi(token);
                 }
             }
             fgets(buffer, 1024, fp);
