@@ -71,7 +71,7 @@ int main(int argc, char **argv)
     int switchBytes = switchDiv.quot + (switchDiv.rem ? 1 : 0);
 
     ioctl(fd, UI_SET_EVBIT, EV_KEY);
-    for (int i = 0; i < (8 * switchBytes) * capabilities.players + 1; i++)
+    for (int i = 0; i < (8 * switchBytes) * capabilities.players + 8; i++)
     {
         ioctl(fd, UI_SET_KEYBIT, 2 + i);
     }
