@@ -45,7 +45,7 @@ To start JVSCore in the terminal to view debug messages, you can start it by typ
 sudo jvscore
 ```
 
-The RS485 converter device path is set in `/etc/jvscore.conf`, with any other configuration values that may come in the future. If you only have one serial device plugged in, you shouldn't have to change it!
+The RS485 converter device path is set in `/etc/jvscore.conf`, with any other configuration values that may come in the future. If you only have one serial device plugged in, you shouldn't have to change it! The fuzz value can also be set in this config file. Fuzz is how much the analogue value has to change by before it is reported to the computer. This is useful if you've got super noisy pots!
 
 
 ## Systemd Service
@@ -64,3 +64,7 @@ To view the logs that JVSCore creates while running as a service, type the follo
 ```
 sudo journalctl -u jvscore
 ```
+
+## Credits
+
+Thank you very much to @chunksin for helping to test and debug issues with the software!

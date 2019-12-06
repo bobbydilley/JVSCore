@@ -67,8 +67,11 @@ int main(int argc, char **argv)
 
     int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
 
+    div_t switchDiv = div(capabilities.switches, 8);
+    int switchBytes = switchDiv.quot + (switchDiv.rem ? 1 : 0);
+
     ioctl(fd, UI_SET_EVBIT, EV_KEY);
-    for (int i = 0; i < capabilities.switches * capabilities.players; i++)
+    for (int i = 0; i < (8 * switchBytes) * capabilities.players + 8; i++)
     {
         ioctl(fd, UI_SET_KEYBIT, 2 + i);
     }
@@ -81,16 +84,16 @@ int main(int argc, char **argv)
 
     memset(&usetup, 0, sizeof(usetup));
     usetup.id.bustype = BUS_USB;
-    usetup.id.vendor = 0x8371;  /* sample vendor */
-    usetup.id.product = 0x3551; /* sample product */
+    usetup.id.vendor = 0x8371;
+    usetup.id.product = 0x3551;
     usetup.id.version = 1;
-    strcpy(usetup.name, name); //"SEGA ENTERPRISESLTD.;I/O BD JVS;837-13551;Ver1.00;98/10"
+    strcpy(usetup.name, name);
 
     for (int i = 0; i < capabilities.analogueInChannels; i++)
     {
         usetup.absmin[i] = 0;
         usetup.absmax[i] = pow(2, capabilities.analogueInBits) - 1;
-        usetup.absfuzz[i] = 0;
+        usetup.absfuzz[i] = analogueFuzz;
         usetup.absflat[i] = 0;
     }
 
@@ -105,10 +108,8 @@ int main(int argc, char **argv)
     int running = 1;
     while (running)
     {
-        div_t switchDiv = div(capabilities.switches, 8);
-        int switchBytes = switchDiv.quot + (switchDiv.rem ? 1 : 0);
 
-        char switches[switchBytes * capabilities.players];
+        char switches[switchBytes * capabilities.players + 1];
         if (!getSwitches(switches, capabilities.players, switchBytes))
         {
             printf("Error getting switches...\n");
@@ -122,7 +123,7 @@ int main(int argc, char **argv)
             break;
         }
 
-        for (int i = 0; i < 2 * capabilities.players; i++)
+        for (int i = 0; i < switchBytes * capabilities.players + 1; i++)
         {
             for (int j = 7; 0 <= j; j--)
             {
