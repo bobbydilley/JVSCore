@@ -30,10 +30,10 @@ https://www.youtube.com/watch?v=kqXEYtvGzno
 
 |RS485 Adapter Side|USB To Arcade Side|
 |---|---|
-|B-|DATA-|
-|A+|DATA+|
-|5-12V|VCC|
-|GND|GND|
+|B-|DATA- (White)|
+|A+|DATA+ (Green)|
+|5-12V|VCC (Red)|
+|GND|GND (Black)|
 
 > I'm not 100% sure if the 5-12V line is giving that, or will just take that - so please be careful what you plug in!
 
@@ -64,6 +64,10 @@ To view the logs that JVSCore creates while running as a service, type the follo
 ```
 sudo journalctl -u jvscore
 ```
+
+## Adapters known to work
+
+- https://www.ebay.co.uk/itm/Industrial-USB-To-RS485-Converter-Upgrade-Protection-RS485-Converter/323744400265?ssPageName=STRK%3AMEBIDX%3AIT&_trksid=p2057872.m2749.l2649
 
 ## Credits
 
