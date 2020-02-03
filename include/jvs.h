@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
+#include <linux/serial.h>
 
 #include "constants.h"
 #include "config.h"
@@ -48,6 +49,7 @@ typedef struct
 
 int connectJVS();
 int setSerialAttributes(int fd, int speed);
+int setSerialLowLatency(int fd);
 int readByte(unsigned char *byte);
 int writeByte(unsigned char byte);
 int readPacket(JVSPacket *packet);

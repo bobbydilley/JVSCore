@@ -11,6 +11,7 @@ int connectJVS()
 	}
 
 	setSerialAttributes(serialIO, B115200);
+	setSerialLowLatency(serialIO);
 
 	return 1;
 }
@@ -342,4 +343,24 @@ int setSerialAttributes(int fd, int myBaud)
 	usleep(100 * 1000); // 10mS
 
 	return 0;
+}
+
+/* Sets the serial port to low latency mode */
+int setSerialLowLatency(int fd)
+{
+	struct serial_struct serial_settings;
+
+	if (ioctl(fd, TIOCGSERIAL, &serial_settings) < 0)
+	{
+		printf("Serial Error - Failed to read serial settings for low latency mode\n");
+		return 0;
+	}
+
+	serial_settings.flags |= ASYNC_LOW_LATENCY;
+	if (ioctl(fd, TIOCSSERIAL, &serial_settings) < 0)
+	{
+		printf("Serial Error - Failed to write serial settings for low latency mode\n");
+		return 0;
+	}
+	return 1;
 }
