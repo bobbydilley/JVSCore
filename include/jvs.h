@@ -50,8 +50,8 @@ typedef struct
 int connectJVS();
 int setSerialAttributes(int fd, int speed);
 int setSerialLowLatency(int fd);
-int readByte(unsigned char *byte);
-int writeByte(unsigned char byte);
+int readByte(char *byte);
+int writeByte(char byte);
 int readPacket(JVSPacket *packet);
 int writePacket(JVSPacket *packet);
 int runCommand(JVSPacket *packet, JVSPacket *returnedPacket);

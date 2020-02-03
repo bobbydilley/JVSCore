@@ -229,12 +229,12 @@ int runCommand(JVSPacket *packet, JVSPacket *returnedPacket)
 	return 1;
 }
 
-int readByte(unsigned char *byte)
+int readByte(char *byte)
 {
 	return read(serialIO, byte, 1);
 }
 
-int writeByte(unsigned char byte)
+int writeByte(char byte)
 {
 	char buffer[] = {0x00};
 	buffer[0] = byte;
