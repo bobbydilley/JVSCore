@@ -3,5 +3,8 @@
     "editor.formatOnSave": true,
     "editor.formatOnType": true,
     "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
-    "cmake.configureOnOpen": true
+    "cmake.configureOnOpen": true,
+    "files.associations": {
+        "*.in": "cpp"
+    }
 }

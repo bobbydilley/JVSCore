@@ -19,6 +19,5 @@ int drivingMappings[] = {BTN_A, BTN_B, BTN_C};
 int shootingMappings[] = {BTN_A, BTN_B, BTN_C};
 
 int main(int argc, char **argv);
-void emit(int fd, int type, int code, int val);
 
 #endif // JVSCORE_H_

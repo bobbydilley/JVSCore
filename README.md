@@ -14,11 +14,14 @@ The JVSCore device driver currently supports the following features of a JVS I/O
 Installation is done from the git repository as follows:
 
 ```
-sudo apt install build-essential git
+sudo apt install build-essential cmake git
 git clone https://github.com/bobbydilley/JVSCore-Public
 cd JVSCore-Public
-make
-sudo make install
+mkdir build && cd build
+cmake ..
+cmake --build .
+cpack
+sudo dpkg --install *.deb
 ```
 
 ## Cable

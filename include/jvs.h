@@ -60,4 +60,5 @@ int getName(char *name);
 int getJVSVersion();
 int getCommsVersion();
 int getCoins();
+
 #endif // JVS_H_

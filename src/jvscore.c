@@ -1,14 +1,14 @@
 #include "jvscore.h"
-
 #include "jvs.h"
 #include "config.h"
 #include "input.h"
+#include "version.h"
 
 int main(int argc, char **argv)
 {
-    printf("JVSCore Device Driver 1.1\n");
+    printf("JVSCore Device Driver Version %s\n", PROJECT_VER);
 
-    char *configFilePath = "/etc/jvscore.conf";
+    char *configFilePath = "/usr/etc/jvscore.conf";
 
     JVSConfig config = {0};
     if (!parseConfig(configFilePath, &config))
