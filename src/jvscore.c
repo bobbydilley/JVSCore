@@ -7,15 +7,16 @@
 int main(int argc, char **argv)
 {
     printf("JVSCore Device Driver 1.1\n");
-    struct uinput_user_dev usetup;
+
     char *configFilePath = "/etc/jvscore.conf";
 
-    if (!parseConfig(configFilePath))
+    JVSConfig config = {0};
+    if (!parseConfig(configFilePath, &config))
     {
         printf("Failed to open config file at %s, using default values.\n", configFilePath);
     }
 
-    if (!connectJVS())
+    if (!connectJVS(config.devicePath))
     {
         printf("Error connecting to serial\n");
         return EXIT_FAILURE;
@@ -69,7 +70,7 @@ int main(int argc, char **argv)
     if (capabilities.backup > 0)
         printf("  Backup: %d\n", capabilities.backup);
 
-    if (!initInput(capabilities))
+    if (!initInput(&capabilities, &name, config.analogueFuzz))
     {
         printf("Failed to initalise inputs\n");
         return EXIT_FAILURE;
@@ -102,12 +103,11 @@ int main(int argc, char **argv)
         updateAnalogues(analogues);
 
         /* Send the updates to the computer */
-        sendUpdates();
+        sendUpdate();
         usleep(50);
     }
 
-    ioctl(fd, UI_DEV_DESTROY);
-    close(fd);
+    closeInput();
 
     return 0;
 }

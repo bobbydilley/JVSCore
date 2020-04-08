@@ -1,39 +1,15 @@
+#include <stdio.h>
 #include <termios.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
+#include <time.h>
+#include <unistd.h>
+#include <linux/serial.h>
+#include <termios.h>
 
 #include "device.h"
 
 int serialIO = -1;
-
-int initDevice(char *devicePath)
-{
-    if ((serialIO = open(devicePath, O_RDWR | O_NOCTTY | O_SYNC)) < 0)
-    {
-        printf("Failed to open %s\n", devicePath);
-        return 0;
-    }
-
-    /* Setup the serial connection */
-    setSerialAttributes(serialIO, B115200);
-    setSerialLowLatency(serialIO);
-
-    usleep(100 * 1000); //required to make flush work, for some reason
-
-    tcflush(serialIO, TCIOFLUSH);
-    usleep(100 * 1000); //required to make flush work, for some reason
-
-    return 1;
-}
-
-int readBytes(char *buffer, int amount)
-{
-    return read(serialIO, buffer, amount);
-}
-
-int writeBytes(char *buffer, int amount)
-{
-    return write(serialIO, buffer, amount);
-}
 
 /* Sets the configuration of the serial port */
 int setSerialAttributes(int fd, int myBaud)
@@ -89,4 +65,34 @@ int setSerialLowLatency(int fd)
         return 0;
     }
     return 1;
+}
+
+int initDevice(char *devicePath)
+{
+    if ((serialIO = open(devicePath, O_RDWR | O_NOCTTY | O_SYNC)) < 0)
+    {
+        printf("Failed to open %s\n", devicePath);
+        return 0;
+    }
+
+    /* Setup the serial connection */
+    setSerialAttributes(serialIO, B115200);
+    setSerialLowLatency(serialIO);
+
+    usleep(100 * 1000); //required to make flush work, for some reason
+
+    tcflush(serialIO, TCIOFLUSH);
+    usleep(100 * 1000); //required to make flush work, for some reason
+
+    return 1;
+}
+
+int readBytes(char *buffer, int amount)
+{
+    return read(serialIO, buffer, amount);
+}
+
+int writeBytes(char *buffer, int amount)
+{
+    return write(serialIO, buffer, amount);
 }

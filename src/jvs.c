@@ -1,11 +1,9 @@
 #include "jvs.h"
-#include "communication.h"
+#include "device.h"
 
-int serialIO = -1;
-
-int connectJVS()
+int connectJVS(char *devicePath)
 {
-	return initCommunication(devicePath);
+	return initDevice(devicePath);
 }
 
 int resetJVS()

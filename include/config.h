@@ -13,9 +13,6 @@ typedef struct JVSConfig
     int analogueFuzz;
 } JVSConfig;
 
-extern char devicePath[];
-extern int analogueFuzz;
-
 int parseConfig(char *filePath, JVSConfig *jvsConfig);
 
 #endif // CONFIG_H_

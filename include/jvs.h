@@ -47,7 +47,7 @@ typedef struct
     unsigned char backup;
 } JVSCapabilities;
 
-int connectJVS();
+int connectJVS(char *devicePath);
 int readPacket(JVSPacket *packet);
 int writePacket(JVSPacket *packet);
 int runCommand(JVSPacket *packet, JVSPacket *returnedPacket);
