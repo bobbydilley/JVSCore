@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 
 project(jvscore
         VERSION "1.2.0"
-        DESCRIPTION Linux user space device driver for JVS I/O boards
-        HOMEPAGE_URL https://github.com/bobbydilley/JVSCore-Public
+	LANGUAGES "C"
+        DESCRIPTION "Linux user space device driver for JVS I/O boards"
+        HOMEPAGE_URL "https://github.com/bobbydilley/JVSCore-Public"
 )
 
 find_package(Threads REQUIRED)
