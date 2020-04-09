@@ -1,0 +1,22 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  ubuntu:
+    name: Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone Tree
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Build
+        run: |
+          mkdir build && cd build && cmake ..
+          cmake --build .
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: *.deb
+          path: build/
