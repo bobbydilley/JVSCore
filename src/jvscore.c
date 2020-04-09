@@ -1,40 +1,45 @@
 #include "jvscore.h"
+#include "jvs.h"
+#include "config.h"
+#include "input.h"
+#include "version.h"
 
 int main(int argc, char **argv)
 {
-    printf("JVSCore Device Driver 1.1\n");
-    struct uinput_user_dev usetup;
-    char *configFilePath = "/etc/jvscore.conf";
+    printf("JVSCore Device Driver Version %s\n", PROJECT_VER);
 
-    if (!parseConfig(configFilePath))
+    char *configFilePath = "/usr/etc/jvscore.conf";
+
+    JVSConfig config = {0};
+    if (!parseConfig(configFilePath, &config))
     {
         printf("Failed to open config file at %s, using default values.\n", configFilePath);
     }
 
-    if (!connectJVS())
+    if (!connectJVS(config.devicePath))
     {
         printf("Error connecting to serial\n");
-        return 1;
+        return EXIT_FAILURE;
     }
 
     if (!resetJVS())
     {
         printf("Error resetting jvs\n");
-        return 1;
+        return EXIT_FAILURE;
     }
 
     JVSCapabilities capabilities = {0};
     if (!getCapabilities(&capabilities))
     {
-        printf("Error getting capabilities...\n");
-        return 1;
+        printf("Error getting capabilities\n");
+        return EXIT_FAILURE;
     }
 
     char name[1024];
     if (!getName(name))
     {
         printf("Error getting name of IO board\n");
-        return 1;
+        return EXIT_FAILURE;
     }
 
     printf("Device Connected: %s\n", name);
@@ -65,98 +70,44 @@ int main(int argc, char **argv)
     if (capabilities.backup > 0)
         printf("  Backup: %d\n", capabilities.backup);
 
-    int fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    if (!initInput(&capabilities, &name, config.analogueFuzz))
+    {
+        printf("Failed to initalise inputs\n");
+        return EXIT_FAILURE;
+    }
 
     div_t switchDiv = div(capabilities.switches, 8);
     int switchBytes = switchDiv.quot + (switchDiv.rem ? 1 : 0);
-
-    ioctl(fd, UI_SET_EVBIT, EV_KEY);
-    for (int i = 0; i < (8 * switchBytes) * capabilities.players + 8; i++)
-    {
-        ioctl(fd, UI_SET_KEYBIT, 2 + i);
-    }
-
-    ioctl(fd, UI_SET_EVBIT, EV_ABS);
-    for (int i = 0; i < capabilities.analogueInChannels; i++)
-    {
-        ioctl(fd, UI_SET_ABSBIT, i);
-    }
-
-    memset(&usetup, 0, sizeof(usetup));
-    usetup.id.bustype = BUS_USB;
-    usetup.id.vendor = 0x8371;
-    usetup.id.product = 0x3551;
-    usetup.id.version = 1;
-    strcpy(usetup.name, name);
-
-    for (int i = 0; i < capabilities.analogueInChannels; i++)
-    {
-        usetup.absmin[i] = 0;
-        usetup.absmax[i] = pow(2, capabilities.analogueInBits) - 1;
-        usetup.absfuzz[i] = analogueFuzz;
-        usetup.absflat[i] = 0;
-    }
-
-    if (write(fd, &usetup, sizeof(usetup)) < 0)
-        return -1;
-
-    if (ioctl(fd, UI_DEV_CREATE) < 0)
-        return -1;
 
     sleep(2);
 
     int running = 1;
     while (running)
     {
-
+        /* Get and update the switches */
         char switches[switchBytes * capabilities.players + 1];
         if (!getSwitches(switches, capabilities.players, switchBytes))
         {
             printf("Error getting switches...\n");
             break;
         }
+        updateSwitches(switches);
 
+        /* Get and update the analogue channels */
         char analogues[2 * capabilities.analogueInChannels];
         if (!getAnalogue(analogues, capabilities.analogueInChannels))
         {
             printf("Error getting switches...\n");
             break;
         }
+        updateAnalogues(analogues);
 
-        for (int i = 0; i < switchBytes * capabilities.players + 1; i++)
-        {
-            for (int j = 7; 0 <= j; j--)
-            {
-                emit(fd, EV_KEY, 2 + (i * 8) + j, (switches[i] >> j) & 0x01);
-            }
-        }
-
-        for (int i = 0; i < capabilities.analogueInChannels; i++)
-        {
-            emit(fd, EV_ABS, i, ((analogues[(i * 2) + 1] & 0xFF) << (capabilities.analogueInChannels - 8)) + (analogues[(i * 2)] & 0xFF));
-        }
-
-        emit(fd, EV_SYN, SYN_REPORT, 0);
-
+        /* Send the updates to the computer */
+        sendUpdate();
         usleep(50);
     }
 
-    ioctl(fd, UI_DEV_DESTROY);
-    close(fd);
+    closeInput();
 
     return 0;
-}
-
-void emit(int fd, int type, int code, int val)
-{
-    struct input_event ie;
-
-    ie.type = type;
-    ie.code = code;
-    ie.value = val;
-    /* timestamp values below are ignored */
-    ie.time.tv_sec = 0;
-    ie.time.tv_usec = 0;
-
-    write(fd, &ie, sizeof(ie));
 }

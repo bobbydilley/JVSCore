@@ -47,11 +47,7 @@ typedef struct
     unsigned char backup;
 } JVSCapabilities;
 
-int connectJVS();
-int setSerialAttributes(int fd, int speed);
-int setSerialLowLatency(int fd);
-int readByte(char *byte);
-int writeByte(char byte);
+int connectJVS(char *devicePath);
 int readPacket(JVSPacket *packet);
 int writePacket(JVSPacket *packet);
 int runCommand(JVSPacket *packet, JVSPacket *returnedPacket);
@@ -64,4 +60,5 @@ int getName(char *name);
 int getJVSVersion();
 int getCommsVersion();
 int getCoins();
+
 #endif // JVS_H_

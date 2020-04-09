@@ -1,19 +1,9 @@
 #include "jvs.h"
+#include "device.h"
 
-int serialIO = -1;
-
-int connectJVS()
+int connectJVS(char *devicePath)
 {
-	if ((serialIO = open(devicePath, O_RDWR | O_NOCTTY | O_SYNC)) < 0)
-	{
-		printf("Failed to open %s\n", devicePath);
-		return 0;
-	}
-
-	setSerialAttributes(serialIO, B115200);
-	setSerialLowLatency(serialIO);
-
-	return 1;
+	return initDevice(devicePath);
 }
 
 int resetJVS()
@@ -229,57 +219,44 @@ int runCommand(JVSPacket *packet, JVSPacket *returnedPacket)
 	return 1;
 }
 
-int readByte(char *byte)
-{
-	return read(serialIO, byte, 1);
-}
-
-int writeByte(char byte)
-{
-	char buffer[] = {0x00};
-	buffer[0] = byte;
-	return write(serialIO, buffer, sizeof(buffer));
-}
-
 int readPacket(JVSPacket *packet)
 {
+
 	unsigned char byte = 0;
-	int timeout = 5;
-	while (byte != SYNC && timeout > 0)
+	int n = readBytes(&byte, 1);
+	while (byte != SYNC || n < 1)
 	{
-		int n = readByte(&byte);
-		if (n == 0)
-		{
-			timeout -= 1;
-		}
+		n = readBytes(&byte, 1);
 	}
 
-	if (timeout == 0)
-	{
-		return -1;
-	}
-
-	readByte(&packet->destination);
-	readByte(&packet->length);
-
+	readBytes(&packet->destination, 1);
+	readBytes(&packet->length, 1);
 	unsigned char checksumComputed = packet->destination + packet->length;
 
+	unsigned char inputBuffer[MAX_PACKET_SIZE];
+	int read = 0;
+	while (read < packet->length)
+	{
+		read += readBytes(inputBuffer + read, packet->length - read);
+	}
+
+	int inputIndex = 0;
 	for (int i = 0; i < packet->length - 1; i++)
 	{
-		readByte(&packet->data[i]);
-		if (packet->data[i] == ESCAPE)
+		packet->data[inputIndex] = inputBuffer[i];
+		if (packet->data[inputIndex] == ESCAPE)
 		{
-			readByte(&packet->data[i]);
-			packet->data[i] += 1;
+			i++;
+			packet->data[inputIndex] = inputBuffer[i] + 1;
 		}
-		checksumComputed = (checksumComputed + packet->data[i]) & 0xFF;
+		checksumComputed = (checksumComputed + packet->data[inputIndex]) & 0xFF;
+		inputIndex++;
 	}
-	unsigned char checksumReceived = 0;
-	readByte(&checksumReceived);
+	unsigned char checksumReceived = inputBuffer[packet->length - 1];
 
 	if (checksumReceived != checksumComputed)
 	{
-		printf("Checksum Error - The checksum is not correct\n");
+		printf("Error: The checksum is not correct\n");
 		return 0;
 	}
 
@@ -288,78 +265,43 @@ int readPacket(JVSPacket *packet)
 
 int writePacket(JVSPacket *packet)
 {
-	writeByte(SYNC);
-	writeByte(packet->destination);
-	writeByte(packet->length + 1);
-	unsigned char checksum = packet->destination + packet->length + 1;
+	/* Don't return anything if there isn't anything to write! */
+	if (packet->length < 1)
+	{
+		return 1;
+	}
+
+	int outputIndex = 0;
+	unsigned char outputBuffer[MAX_PACKET_SIZE];
+
+	outputBuffer[outputIndex] = SYNC;
+	outputBuffer[outputIndex + 1] = packet->destination;
+	outputBuffer[outputIndex + 2] = packet->length + 2;
+	outputBuffer[outputIndex + 3] = STATUS_SUCCESS;
+	outputIndex += 4;
+
+	unsigned char checksum = packet->destination + packet->length + 2 + STATUS_SUCCESS;
 	for (int i = 0; i < packet->length; i++)
 	{
 		if (packet->data[i] == SYNC || packet->data[i] == ESCAPE)
 		{
-			writeByte(ESCAPE);
-			writeByte(packet->data[i] - 1);
+			outputBuffer[outputIndex] = ESCAPE;
+			outputBuffer[outputIndex + 1] = (packet->data[i] - 1);
+			outputIndex += 2;
 		}
 		else
 		{
-			writeByte(packet->data[i]);
+			outputBuffer[outputIndex] = (packet->data[i]);
+			outputIndex++;
 		}
 		checksum = (checksum + packet->data[i]) & 0xFF;
 	}
-	writeByte(checksum);
-	return 1;
-}
+	outputBuffer[outputIndex] = checksum;
+	outputIndex += 1;
 
-/* Sets the configuration of the serial port */
-int setSerialAttributes(int fd, int myBaud)
-{
-	struct termios options;
-	int status;
-	tcgetattr(fd, &options);
-
-	cfmakeraw(&options);
-	cfsetispeed(&options, myBaud);
-	cfsetospeed(&options, myBaud);
-
-	options.c_cflag |= (CLOCAL | CREAD);
-	options.c_cflag &= ~PARENB;
-	options.c_cflag &= ~CSTOPB;
-	options.c_cflag &= ~CSIZE;
-	options.c_cflag |= CS8;
-	options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-	options.c_oflag &= ~OPOST;
-
-	options.c_cc[VMIN] = 0;
-	options.c_cc[VTIME] = 100; // Ten seconds (100 deciseconds)
-
-	tcsetattr(fd, TCSANOW, &options);
-
-	ioctl(fd, TIOCMGET, &status);
-
-	status |= TIOCM_DTR;
-	status |= TIOCM_RTS;
-
-	ioctl(fd, TIOCMSET, &status);
-
-	usleep(100 * 1000); // 10mS
-
-	return 0;
-}
-
-/* Sets the serial port to low latency mode */
-int setSerialLowLatency(int fd)
-{
-	struct serial_struct serial_settings;
-
-	if (ioctl(fd, TIOCGSERIAL, &serial_settings) < 0)
+	if (writeBytes(outputBuffer, outputIndex) < outputIndex)
 	{
-		printf("Serial Error - Failed to read serial settings for low latency mode\n");
-		return 0;
-	}
-
-	serial_settings.flags |= ASYNC_LOW_LATENCY;
-	if (ioctl(fd, TIOCSSERIAL, &serial_settings) < 0)
-	{
-		printf("Serial Error - Failed to write serial settings for low latency mode\n");
+		printf("Failure: Could not write enough bytes\n");
 		return 0;
 	}
 	return 1;
