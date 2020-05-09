@@ -276,11 +276,10 @@ int writePacket(JVSPacket *packet)
 
 	outputBuffer[outputIndex] = SYNC;
 	outputBuffer[outputIndex + 1] = packet->destination;
-	outputBuffer[outputIndex + 2] = packet->length + 2;
-	outputBuffer[outputIndex + 3] = STATUS_SUCCESS;
-	outputIndex += 4;
+	outputBuffer[outputIndex + 2] = packet->length + 1;
+	outputIndex += 3;
 
-	unsigned char checksum = packet->destination + packet->length + 2 + STATUS_SUCCESS;
+	unsigned char checksum = packet->destination + packet->length + 1;
 	for (int i = 0; i < packet->length; i++)
 	{
 		if (packet->data[i] == SYNC || packet->data[i] == ESCAPE)
