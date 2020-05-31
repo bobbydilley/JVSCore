@@ -4,7 +4,7 @@
 #include "input.h"
 #include "version.h"
 
-int main(int argc, char **argv)
+int main()
 {
     printf("JVSCore Device Driver Version %s\n", PROJECT_VER);
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
     if (capabilities.generalPurposeOutputs > 0)
         printf("  General Purpose Outputs: %d\n", capabilities.generalPurposeOutputs);
     if (capabilities.generalPurposeInputs > 0)
-        ("  General Purpose Inputs: %d\n", capabilities.generalPurposeInputs);
+        printf("  General Purpose Inputs: %d\n", capabilities.generalPurposeInputs);
     if (capabilities.card > 0)
         printf("  Card: %d\n", capabilities.card);
     if (capabilities.hopper > 0)
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     if (capabilities.backup > 0)
         printf("  Backup: %d\n", capabilities.backup);
 
-    if (!initInput(&capabilities, &name, config.analogueFuzz))
+    if (!initInput(&capabilities, name, config.analogueFuzz))
     {
         printf("Failed to initalise inputs\n");
         return EXIT_FAILURE;
@@ -86,25 +86,26 @@ int main(int argc, char **argv)
     {
         /* Get and update the switches */
         char switches[switchBytes * capabilities.players + 1];
+        usleep(50);
         if (!getSwitches(switches, capabilities.players, switchBytes))
         {
-            printf("Error getting switches...\n");
+            printf("Error getting switches, closing.\n");
             break;
         }
         updateSwitches(switches);
 
         /* Get and update the analogue channels */
         char analogues[2 * capabilities.analogueInChannels];
+        usleep(50);
         if (!getAnalogue(analogues, capabilities.analogueInChannels))
         {
-            printf("Error getting switches...\n");
+            printf("Error getting analogues, closing.\n");
             break;
         }
         updateAnalogues(analogues);
 
         /* Send the updates to the computer */
         sendUpdate();
-        usleep(50);
     }
 
     closeInput();

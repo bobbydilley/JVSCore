@@ -18,6 +18,6 @@ int switchMappings[] = {BTN_DPAD_UP, BTN_DPAD_DOWN, BTN_DPAD_LEFT, BTN_DPAD_RIGH
 int drivingMappings[] = {BTN_A, BTN_B, BTN_C};
 int shootingMappings[] = {BTN_A, BTN_B, BTN_C};
 
-int main(int argc, char **argv);
+int main();
 
 #endif // JVSCORE_H_

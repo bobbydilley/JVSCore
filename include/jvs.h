@@ -17,12 +17,26 @@
 #include "constants.h"
 #include "config.h"
 
+#define JVS_RETRY_COUNT 3
+#define JVS_MAX_PACKET_SIZE 255
+
 typedef struct
 {
     unsigned char destination;
     unsigned char length;
     unsigned char data[MAX_PACKET_SIZE];
 } JVSPacket;
+
+typedef enum
+{
+    JVS_STATUS_SUCCESS,
+    JVS_STATUS_NOT_FOR_US,
+    JVS_STATUS_ERROR,
+    JVS_STATUS_ERROR_TIMEOUT,
+    JVS_STATUS_ERROR_CHECKSUM,
+    JVS_STATUS_ERROR_WRITE_FAIL,
+    JVS_STATUS_ERROR_UNSUPPORTED_COMMAND,
+} JVSStatus;
 
 typedef struct
 {
@@ -48,8 +62,8 @@ typedef struct
 } JVSCapabilities;
 
 int connectJVS(char *devicePath);
-int readPacket(JVSPacket *packet);
-int writePacket(JVSPacket *packet);
+JVSStatus readPacket(JVSPacket *packet);
+JVSStatus writePacket(JVSPacket *packet);
 int runCommand(JVSPacket *packet, JVSPacket *returnedPacket);
 
 int resetJVS();

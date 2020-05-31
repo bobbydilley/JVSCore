@@ -67,12 +67,12 @@ int initInput(JVSCapabilities *sentCapabilities, char *name, int analogueFuzz)
     }
 
     if (write(fd, &usetup, sizeof(usetup)) < 0)
-        return -1;
+        return 0;
 
     if (ioctl(fd, UI_DEV_CREATE) < 0)
-        return -1;
+        return 0;
 
-    return 0;
+    return 1;
 }
 
 int closeInput()

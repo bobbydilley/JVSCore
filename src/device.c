@@ -31,7 +31,7 @@ int setSerialAttributes(int fd, int myBaud)
     options.c_oflag &= ~OPOST;
 
     options.c_cc[VMIN] = 0;
-    options.c_cc[VTIME] = 100; // Ten seconds (100 deciseconds)
+    options.c_cc[VTIME] = 3; // One seconds (10 deciseconds)
 
     tcsetattr(fd, TCSANOW, &options);
 
@@ -44,32 +44,22 @@ int setSerialAttributes(int fd, int myBaud)
 
     usleep(100 * 1000); // 10mS
 
-    return 0;
-}
-
-/* Sets the serial port to low latency mode */
-int setSerialLowLatency(int fd)
-{
     struct serial_struct serial_settings;
 
-    if (ioctl(fd, TIOCGSERIAL, &serial_settings) < 0)
-    {
-        printf("Serial Error - Failed to read serial settings for low latency mode\n");
-        return 0;
-    }
+    ioctl(fd, TIOCGSERIAL, &serial_settings);
 
     serial_settings.flags |= ASYNC_LOW_LATENCY;
-    if (ioctl(fd, TIOCSSERIAL, &serial_settings) < 0)
-    {
-        printf("Serial Error - Failed to write serial settings for low latency mode\n");
-        return 0;
-    }
-    return 1;
+    ioctl(fd, TIOCSSERIAL, &serial_settings);
+
+    tcflush(serialIO, TCIOFLUSH);
+    usleep(100 * 1000); // Required to make flush work, for some reason
+
+    return 0;
 }
 
 int initDevice(char *devicePath)
 {
-    if ((serialIO = open(devicePath, O_RDWR | O_NOCTTY | O_SYNC)) < 0)
+    if ((serialIO = open(devicePath, O_RDWR | O_NOCTTY)) < 0)
     {
         printf("Failed to open %s\n", devicePath);
         return 0;
@@ -77,12 +67,6 @@ int initDevice(char *devicePath)
 
     /* Setup the serial connection */
     setSerialAttributes(serialIO, B115200);
-    setSerialLowLatency(serialIO);
-
-    usleep(100 * 1000); //required to make flush work, for some reason
-
-    tcflush(serialIO, TCIOFLUSH);
-    usleep(100 * 1000); //required to make flush work, for some reason
 
     return 1;
 }
@@ -95,4 +79,10 @@ int readBytes(char *buffer, int amount)
 int writeBytes(char *buffer, int amount)
 {
     return write(serialIO, buffer, amount);
+}
+
+int drain()
+{
+    usleep(100 * 1000);
+    return tcflush(serialIO, TCIOFLUSH);
 }
