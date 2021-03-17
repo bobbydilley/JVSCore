@@ -8,19 +8,6 @@
 #ifndef JVS_H_
 #define JVS_H_
 
-#include <stdio.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <termios.h>
-#include <unistd.h>
-#include <time.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/ioctl.h>
-#include <linux/serial.h>
-
 #include "constants.h"
 #include "config.h"
 
@@ -77,6 +64,7 @@ int resetJVS();
 int getCapabilities(JVSCapabilities *capabilities);
 int getSwitches(char *switches, int players, int bytes);
 int getAnalogue(char *analogues, int channels);
+int getLightGun(int *gunPosition, unsigned char player);
 int getName(char *name);
 int getJVSVersion();
 int getCommsVersion();

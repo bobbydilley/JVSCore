@@ -8,6 +8,8 @@ The JVSCore device driver currently supports the following features of a JVS I/O
 
 - Switches
 - Analogue Inputs
+- Lightgun Inputs
+- Coin Inputs
 
 ## Installation
 
@@ -15,13 +17,10 @@ Installation is done from the git repository as follows:
 
 ```
 sudo apt install build-essential cmake git
-git clone https://github.com/bobbydilley/JVSCore-Public
-cd JVSCore-Public
-mkdir build && cd build
-cmake ..
-cmake --build .
-cpack
-sudo dpkg --install *.deb
+git clone https://github.com/bobbydilley/JVSCore
+cd JVSCore
+make
+sudo make install
 ```
 
 ## Cable
@@ -48,7 +47,7 @@ To start JVSCore in the terminal to view debug messages, you can start it by typ
 sudo jvscore
 ```
 
-The RS485 converter device path is set in `/etc/jvscore.conf`, with any other configuration values that may come in the future. If you only have one serial device plugged in, you shouldn't have to change it! The fuzz value can also be set in this config file. Fuzz is how much the analogue value has to change by before it is reported to the computer. This is useful if you've got super noisy pots!
+The RS485 converter device path is set in `/etc/jvscore.conf`, with any other configuration values that may come in the future. If you only have one serial device plugged in, you shouldn't have to change it! The fuzz value can also be set in this config file. Fuzz is how much the analogue value has to change by before it is reported to the computer. This is useful if you've got super noisy pots on your controllers!
 
 
 ## Systemd Service

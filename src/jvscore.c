@@ -6,6 +6,19 @@
  **/
 
 #include "jvscore.h"
+#include <stdio.h>
+#include <string.h>
+#include <linux/uinput.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
+#include <time.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <math.h>
+
 #include "jvs.h"
 #include "config.h"
 #include "input.h"
@@ -15,7 +28,7 @@ int main()
 {
     printf("JVSCore Device Driver Version %s\n", PROJECT_VER);
 
-    char *configFilePath = "/usr/etc/jvscore.conf";
+    char *configFilePath = "/etc/jvscore.conf";
 
     JVSConfig config = {0};
     if (!parseConfig(configFilePath, &config))
@@ -50,8 +63,10 @@ int main()
     }
 
     printf("Device Connected: %s\n", name);
-    printf("  Players: %d\n", capabilities.players);
-    printf("  Switches: %d\n", capabilities.switches);
+    if(capabilities.players > 0)
+        printf("  Players: %d\n", capabilities.players);
+    if(capabilities.switches > 0)
+        printf("  Switches per player: %d\n", capabilities.switches);
     if (capabilities.coins > 0)
         printf("  Coins: %d\n", capabilities.coins);
     if (capabilities.analogueInChannels > 0)
@@ -92,24 +107,38 @@ int main()
     while (running)
     {
         /* Get and update the switches */
-        char switches[switchBytes * capabilities.players + 1];
-        usleep(50);
-        if (!getSwitches(switches, capabilities.players, switchBytes))
-        {
-            printf("Error getting switches, closing.\n");
-            break;
+        if(capabilities.switches > 0) {
+            char switches[switchBytes * capabilities.players + 1];
+            usleep(50);
+            if (!getSwitches(switches, capabilities.players, switchBytes))
+            {
+                printf("Error getting switches, closing.\n");
+                break;
+            }
+            updateSwitches(switches);
         }
-        updateSwitches(switches);
-
+        
         /* Get and update the analogue channels */
-        char analogues[2 * capabilities.analogueInChannels];
-        usleep(50);
-        if (!getAnalogue(analogues, capabilities.analogueInChannels))
-        {
-            printf("Error getting analogues, closing.\n");
-            break;
+        if(capabilities.analogueInChannels > 0) {
+            char analogues[2 * capabilities.analogueInChannels];
+            usleep(50);
+            if (!getAnalogue(analogues, capabilities.analogueInChannels))
+            {
+                printf("Error getting analogues, closing.\n");
+                break;
+            }
+            updateAnalogues(analogues);
         }
-        updateAnalogues(analogues);
+
+        /* Get and update the gun positions */
+        if(capabilities.gunChannels > 0) {
+            int gunPosition[2];
+            usleep(50);
+            if(!getLightGun(gunPosition, 0)) {
+                printf("Error getting gun position, closing.\n");
+                break;
+            }
+        }
 
         /* Send the updates to the computer */
         sendUpdate();

@@ -19,10 +19,16 @@
 
 #include "input.h"
 
+int switchMappings[] = {BTN_DPAD_UP, BTN_DPAD_DOWN, BTN_DPAD_LEFT, BTN_DPAD_RIGHT, BTN_1, BTN_2, BTN_3, BTN_4, BTN_5, BTN_NORTH, BTN_EAST, BTN_SOUTH, BTN_WEST, BTN_A, BTN_B, BTN_C};
+int analogueMappings[] = {ABS_X, ABS_Y, ABS_Z, ABS_RZ, ABS_RX, ABS_RY, ABS_GAS, ABS_BRAKE, ABS_WHEEL};
+
 JVSCapabilities *capabilities;
 int switchBytes = -1;
 int fd = -1;
 struct uinput_user_dev usetup;
+
+int maxAnalogueMappings = 0;
+int maxSwitchMappings = 0;
 
 void emit(int fd, int type, int code, int val)
 {
@@ -44,6 +50,9 @@ int initInput(JVSCapabilities *sentCapabilities, char *name, int analogueFuzz)
     div_t switchDiv = div(capabilities->switches, 8);
     switchBytes = switchDiv.quot + (switchDiv.rem ? 1 : 0);
 
+    maxAnalogueMappings = sizeof(analogueMappings) / sizeof(analogueMappings[0]);
+    maxSwitchMappings = sizeof(switchMappings) / sizeof(switchMappings[0]);
+
     fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
 
     ioctl(fd, UI_SET_EVBIT, EV_KEY);
@@ -55,7 +64,7 @@ int initInput(JVSCapabilities *sentCapabilities, char *name, int analogueFuzz)
     ioctl(fd, UI_SET_EVBIT, EV_ABS);
     for (int i = 0; i < capabilities->analogueInChannels; i++)
     {
-        ioctl(fd, UI_SET_ABSBIT, i);
+        ioctl(fd, UI_SET_ABSBIT, analogueMappings[i]);
     }
 
     memset(&usetup, 0, sizeof(usetup));

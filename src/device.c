@@ -12,9 +12,14 @@
 #include <time.h>
 #include <unistd.h>
 #include <linux/serial.h>
-#include <termios.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <stdarg.h>
 
 #include "device.h"
+
+#define TIMEOUT_SELECT 200
 
 int serialIO = -1;
 
@@ -38,7 +43,7 @@ int setSerialAttributes(int fd, int myBaud)
     options.c_oflag &= ~OPOST;
 
     options.c_cc[VMIN] = 0;
-    options.c_cc[VTIME] = 3; // One seconds (10 deciseconds)
+    options.c_cc[VTIME] = 0; // One seconds (10 deciseconds)
 
     tcsetattr(fd, TCSANOW, &options);
 
@@ -78,12 +83,29 @@ int initDevice(char *devicePath)
     return 1;
 }
 
-int readBytes(char *buffer, int amount)
+int readBytes(unsigned char *buffer, int amount)
 {
+    fd_set fd_serial;
+    struct timeval tv;
+
+    FD_ZERO(&fd_serial);
+    FD_SET(serialIO, &fd_serial);
+
+    tv.tv_sec = 0;
+    tv.tv_usec = TIMEOUT_SELECT * 1000;
+
+    int filesReadyToRead = select(serialIO + 1, &fd_serial, NULL, NULL, &tv);
+
+    if (filesReadyToRead < 1)
+        return -1;
+
+    if (!FD_ISSET(serialIO, &fd_serial))
+        return -1;
+
     return read(serialIO, buffer, amount);
 }
 
-int writeBytes(char *buffer, int amount)
+int writeBytes(unsigned char *buffer, int amount)
 {
     return write(serialIO, buffer, amount);
 }

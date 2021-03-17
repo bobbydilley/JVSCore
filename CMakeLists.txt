@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(jvscore
-        VERSION "1.3.1"
+        VERSION "1.4.0"
 	LANGUAGES "C"
         DESCRIPTION "Linux user space device driver for JVS I/O boards"
         HOMEPAGE_URL "https://github.com/bobbydilley/JVSCore-Public"
@@ -25,7 +25,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
         C_STANDARD 99
 )
 
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -g)
 
 target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} m)
 
@@ -33,13 +33,12 @@ install(
         TARGETS ${PROJECT_NAME}
         COMPONENT binaries
         RUNTIME DESTINATION "bin/"
-        LIBRARY DESTINATION "lib/"
 )
 
 install(
         FILES docs/jvscore.conf
         COMPONENT config
-        DESTINATION "etc/"
+        DESTINATION "/etc/"
 )
 
 install(
