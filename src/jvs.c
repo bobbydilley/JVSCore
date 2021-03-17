@@ -4,7 +4,7 @@
  * SPDX-FileCopyrightText: 2019 Bobby Dilley <bobby@dilley.uk>
  * SPDX-License-Identifier: GPL-3.0-or-later
  **/
- 
+
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -46,7 +46,7 @@ int resetJVS()
 		return -1;
 	}
 
-	usleep(1000 * 1000);
+	usleep(1000 * 100);
 
 	/* Assign the I/O device ID 0x01 */
 	unsigned char deviceAssignData[] = {CMD_ASSIGN_ADDR, DEVICE_ID};
@@ -104,6 +104,29 @@ int getAnalogue(char *analogues, int channels)
 	}
 	return 1;
 }
+
+int getCoins(unsigned char *coins, int slot)
+{
+	outputPacket.destination = DEVICE_ID;
+
+	unsigned char data[] = {CMD_READ_COINS, slot};
+	outputPacket.length = 2;
+	memcpy(outputPacket.data, data, outputPacket.length);
+	if (!runCommand(&outputPacket, &inputPacket))
+	{
+		printf("Failed to send coins question to device\n");
+		return 0;
+	}
+
+	int i = 2;
+	while (i < inputPacket.length)
+	{
+		//printf("%d\n", inputPacket.data[i]);
+		i++;
+	}
+	return 1;
+}
+
 
 int getLightGun(int *gunPosition, unsigned char player)
 {
@@ -230,6 +253,7 @@ int runCommand(JVSPacket *outputPacket, JVSPacket *inputPacket)
 	while (timeout > 0)
 	{
 		JVSStatus writePacketResponse = writePacket(outputPacket);
+
 		if (writePacketResponse != JVS_STATUS_SUCCESS)
 		{
 			printf("Write Error - Failed to write the packet\n");
@@ -240,7 +264,6 @@ int runCommand(JVSPacket *outputPacket, JVSPacket *inputPacket)
 		usleep(500);
 
 		JVSStatus readPacketResponse = readPacket(inputPacket);
-
 		if (readPacketResponse != JVS_STATUS_SUCCESS)
 		{
 			switch (readPacketResponse)

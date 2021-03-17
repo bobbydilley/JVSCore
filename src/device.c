@@ -96,11 +96,15 @@ int readBytes(unsigned char *buffer, int amount)
 
     int filesReadyToRead = select(serialIO + 1, &fd_serial, NULL, NULL, &tv);
 
-    if (filesReadyToRead < 1)
+    if (filesReadyToRead < 1) {
+        printf("Reading failed\n");
         return -1;
+    }
 
-    if (!FD_ISSET(serialIO, &fd_serial))
+    if (!FD_ISSET(serialIO, &fd_serial)) {
+        printf("Reading failed\n");
         return -1;
+    }
 
     return read(serialIO, buffer, amount);
 }

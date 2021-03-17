@@ -19,7 +19,7 @@
 
 #include "input.h"
 
-int switchMappings[] = {BTN_DPAD_UP, BTN_DPAD_DOWN, BTN_DPAD_LEFT, BTN_DPAD_RIGHT, BTN_1, BTN_2, BTN_3, BTN_4, BTN_5, BTN_NORTH, BTN_EAST, BTN_SOUTH, BTN_WEST, BTN_A, BTN_B, BTN_C};
+int switchMappings[] = {KEY_A, KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G, KEY_H, BTN_DPAD_UP, BTN_DPAD_DOWN, BTN_DPAD_LEFT, BTN_DPAD_RIGHT, BTN_1, BTN_2, BTN_3, BTN_4, BTN_5, BTN_NORTH, BTN_EAST, BTN_SOUTH, BTN_WEST, BTN_A, BTN_B, BTN_C};
 int analogueMappings[] = {ABS_X, ABS_Y, ABS_Z, ABS_RZ, ABS_RX, ABS_RY, ABS_GAS, ABS_BRAKE, ABS_WHEEL};
 
 JVSCapabilities *capabilities;
@@ -58,7 +58,11 @@ int initInput(JVSCapabilities *sentCapabilities, char *name, int analogueFuzz)
     ioctl(fd, UI_SET_EVBIT, EV_KEY);
     for (int i = 0; i < (8 * switchBytes) * capabilities->players + 8; i++)
     {
-        ioctl(fd, UI_SET_KEYBIT, 2 + i);
+        if(i < maxSwitchMappings) {
+            ioctl(fd, UI_SET_KEYBIT, switchMappings[i]);
+        } else {
+            ioctl(fd, UI_SET_KEYBIT, 2 + i);
+        }
     }
 
     ioctl(fd, UI_SET_EVBIT, EV_ABS);
@@ -103,7 +107,12 @@ int updateSwitches(char *switches)
     {
         for (int j = 7; 0 <= j; j--)
         {
-            emit(fd, EV_KEY, 2 + (i * 8) + j, (switches[i] >> j) & 0x01);
+            int switchNumber = (i * 8) + j;
+            if(switchNumber < maxSwitchMappings) {
+                emit(fd, EV_KEY, switchMappings[i], (switches[i] >> j) & 0x01);
+            } else {
+                emit(fd, EV_KEY, 2 + switchNumber, (switches[i] >> j) & 0x01);
+            }
         }
     }
     return 1;

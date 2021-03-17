@@ -65,6 +65,7 @@ int getCapabilities(JVSCapabilities *capabilities);
 int getSwitches(char *switches, int players, int bytes);
 int getAnalogue(char *analogues, int channels);
 int getLightGun(int *gunPosition, unsigned char player);
+int getCoins(unsigned char *coins, int slot);
 int getName(char *name);
 int getJVSVersion();
 int getCommsVersion();

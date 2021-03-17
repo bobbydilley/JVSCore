@@ -9,7 +9,6 @@ The JVSCore device driver currently supports the following features of a JVS I/O
 - Switches
 - Analogue Inputs
 - Lightgun Inputs
-- Coin Inputs
 
 ## Installation
 
@@ -34,10 +33,8 @@ https://www.youtube.com/watch?v=kqXEYtvGzno
 |---|---|
 |B-|DATA- (White)|
 |A+|DATA+ (Green)|
-|5-12V|VCC (Red)|
+|GND|VCC (Red)|
 |GND|GND (Black)|
-
-> I'm not 100% sure if the 5-12V line is giving that, or will just take that - so please be careful what you plug in!
 
 ## Command Line Usage
 
@@ -69,7 +66,7 @@ sudo journalctl -u jvscore
 
 ## Adapters known to work
 
-- https://www.ebay.co.uk/itm/Industrial-USB-To-RS485-Converter-Upgrade-Protection-RS485-Converter/323744400265?ssPageName=STRK%3AMEBIDX%3AIT&_trksid=p2057872.m2749.l2649
+The best adapters are those with an FTDI chipset.
 
 ## Credits
 
