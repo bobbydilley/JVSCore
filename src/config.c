@@ -1,3 +1,10 @@
+/**
+ * Author: Bobby Dilley
+ * Created: 2019
+ * SPDX-FileCopyrightText: 2019 Bobby Dilley <bobby@dilley.uk>
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ **/
+
 #include "config.h"
 
 char devicePath[2024] = "/dev/ttyUSB0";
