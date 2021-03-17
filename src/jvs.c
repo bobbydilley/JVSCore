@@ -381,7 +381,7 @@ JVSStatus readPacket(JVSPacket *packet)
 JVSStatus writePacket(JVSPacket *packet)
 {
 	/* Don't return anything if there isn't anything to write! */
-	if (packet->length < 2)
+	if (packet->length < 1)
 		return JVS_STATUS_SUCCESS;
 
 	/* Get pointer to raw data in packet */
