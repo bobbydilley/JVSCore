@@ -17,9 +17,13 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <linux/serial.h>
+#include <math.h>
 
 #include "jvs.h"
 #include "device.h"
+
+/* Information that is cached */
+unsigned char switchBytesPerPlayer = 2;
 
 /* The in and out packets used to read and write to and from*/
 JVSPacket inputPacket, outputPacket;
@@ -61,11 +65,11 @@ int resetJVS()
 	return 1;
 }
 
-int getSwitches(char *switches, int players, int bytes)
+int getSwitches(unsigned char *switches, int players)
 {
 	outputPacket.destination = DEVICE_ID;
 
-	unsigned char data[] = {CMD_READ_SWITCHES, players, bytes};
+	unsigned char data[] = {CMD_READ_SWITCHES, players, getSwitchBytesPerPlayer()};
 	outputPacket.length = 3;
 	memcpy(outputPacket.data, data, outputPacket.length);
 	if (!runCommand(&outputPacket, &inputPacket))
@@ -83,7 +87,89 @@ int getSwitches(char *switches, int players, int bytes)
 	return 1;
 }
 
-int getAnalogue(char *analogues, int channels)
+/**
+ * Query all supported commands from the JVS IO
+ * 
+ * Checks in the capabilities structure for all the supported commands
+ * and queries the IO for them in once single packet. This is much faster
+ * than querying individual packets
+ * 
+ * @param capabilities The capabilities to check from
+ * @param coins A pointer to the coins variable to hold the coins in
+ * @param switches A pointer to the switches variable to hold the switch data in
+ * @param analogues A pointer to the analogues variable to hold the analogue data in
+ */
+int getSupported(JVSCapabilities *capabilities, unsigned char *coins, unsigned char *switches, unsigned char *analogues)
+{
+	outputPacket.destination = DEVICE_ID;
+	outputPacket.length = 0;
+
+	if (capabilities->coins)
+	{
+		outputPacket.data[outputPacket.length++] = CMD_READ_COINS;
+		outputPacket.data[outputPacket.length++] = capabilities->coins;
+	}
+
+	if (capabilities->switches)
+	{
+		outputPacket.data[outputPacket.length++] = CMD_READ_SWITCHES;
+		outputPacket.data[outputPacket.length++] = capabilities->players;
+		outputPacket.data[outputPacket.length++] = 2;
+	}
+
+	if (capabilities->analogueInChannels)
+	{
+		outputPacket.data[outputPacket.length++] = CMD_READ_ANALOGS;
+		outputPacket.data[outputPacket.length++] = capabilities->analogueInChannels;
+	}
+
+	if (!runCommand(&outputPacket, &inputPacket))
+	{
+		printf("Failed to send JVS commands to device\n");
+		return 0;
+	}
+
+	unsigned char packetPointer = 1;
+
+	if (capabilities->coins)
+	{
+		if (inputPacket.data[packetPointer++] != REPORT_SUCCESS)
+			printf("Coin question did not report success\n");
+
+		for (int i = 0; i < capabilities->coins; i++)
+		{
+			coins[i] = inputPacket.data[++packetPointer];
+			packetPointer++;
+		}
+	}
+
+	if (capabilities->switches)
+	{
+		if (inputPacket.data[packetPointer++] != REPORT_SUCCESS)
+			printf("Switch question did not report success\n");
+
+		for (int i = 0; i < 1 + switchBytesPerPlayer * capabilities->players; i++)
+		{
+			switches[i] = inputPacket.data[packetPointer++];
+		}
+	}
+
+	if (capabilities->analogueInChannels)
+	{
+		if (inputPacket.data[packetPointer++] != REPORT_SUCCESS)
+			printf("Analogue question did not report success\n");
+
+		for (int i = 0; i < capabilities->analogueInChannels; i++)
+		{
+			analogues[i] = inputPacket.data[packetPointer] << 8 | inputPacket.data[packetPointer + 1];
+			packetPointer += 2;
+		}
+	}
+
+	return 1;
+}
+
+int getAnalogue(int *analogues, int channels)
 {
 	outputPacket.destination = DEVICE_ID;
 
@@ -99,17 +185,17 @@ int getAnalogue(char *analogues, int channels)
 	int i = 2;
 	while (i < inputPacket.length)
 	{
-		analogues[i - 2] = inputPacket.data[i];
-		i++;
+		analogues[i - 2] = inputPacket.data[i] << 8 | inputPacket.data[i + 1];
+		i += 2;
 	}
 	return 1;
 }
 
-int getCoins(unsigned char *coins, int slot)
+int getCoins(unsigned char *coins, unsigned char slots)
 {
 	outputPacket.destination = DEVICE_ID;
 
-	unsigned char data[] = {CMD_READ_COINS, slot};
+	unsigned char data[] = {CMD_READ_COINS, slots};
 	outputPacket.length = 2;
 	memcpy(outputPacket.data, data, outputPacket.length);
 	if (!runCommand(&outputPacket, &inputPacket))
@@ -119,34 +205,29 @@ int getCoins(unsigned char *coins, int slot)
 	}
 
 	int i = 2;
+	int coinCounter = 0;
 	while (i < inputPacket.length)
 	{
-		//printf("%d\n", inputPacket.data[i]);
-		i++;
+		coins[coinCounter++] = inputPacket.data[i + 1];
+		i += 2;
 	}
+
 	return 1;
 }
 
-
-int getLightGun(int *gunPosition, unsigned char player)
+int decreaseCoins(unsigned char amount, unsigned char slot)
 {
 	outputPacket.destination = DEVICE_ID;
 
-	unsigned char data[] = {CMD_READ_LIGHTGUN, player};
-	outputPacket.length = 2;
+	unsigned char data[] = {CMD_DECREASE_COINS, slot, 0x00, amount};
+	outputPacket.length = 4;
 	memcpy(outputPacket.data, data, outputPacket.length);
 	if (!runCommand(&outputPacket, &inputPacket))
 	{
-		printf("Failed to send light gun question to device\n");
+		printf("Failed to send decrease coins command to device\n");
 		return 0;
 	}
 
-	int i = 1;
-	while (i < inputPacket.length)
-	{
-		gunPosition[i - 2] = inputPacket.data[i] << 8 | inputPacket.data[i + 1];
-		i += 2;
-	}
 	return 1;
 }
 
@@ -194,53 +275,83 @@ int getCapabilities(JVSCapabilities *capabilities)
 		switch (inputPacket.data[i])
 		{
 		case CAP_END:
+		{
 			finished = 1;
-			break;
+		}
+		break;
 		case CAP_PLAYERS:
+		{
 			capabilities->players = inputPacket.data[i + 1];
 			capabilities->switches = inputPacket.data[i + 2];
-			break;
+			div_t switchDiv = div(capabilities->switches, 8);
+			switchBytesPerPlayer = switchDiv.quot + (switchDiv.rem ? 1 : 0);
+		}
+		break;
 		case CAP_ANALOG_IN:
+		{
 			capabilities->analogueInChannels = inputPacket.data[i + 1];
 			capabilities->analogueInBits = inputPacket.data[i + 2] ? inputPacket.data[i + 2] : 8;
-			break;
+		}
+		break;
 		case CAP_COINS:
+		{
 			capabilities->coins = inputPacket.data[i + 1];
-			break;
+		}
+		break;
 		case CAP_ROTARY:
+		{
 			capabilities->rotaryChannels = inputPacket.data[i + 1];
-			break;
+		}
+		break;
 		case CAP_KEYPAD:
+		{
 			capabilities->keypad = 1;
-			break;
+		}
+		break;
 		case CAP_LIGHTGUN:
+		{
 			capabilities->gunXBits = inputPacket.data[i + 1];
 			capabilities->gunYBits = inputPacket.data[i + 2];
 			capabilities->gunChannels = inputPacket.data[i + 3];
-			break;
+		}
+		break;
 		case CAP_GPI:
+		{
 			capabilities->generalPurposeOutputs = inputPacket.data[i + 1] << 8 | inputPacket.data[i + 2];
-			break;
+		}
+		break;
 		case CAP_CARD:
+		{
 			capabilities->card = inputPacket.data[i + 1];
-			break;
+		}
+		break;
 		case CAP_HOPPER:
+		{
 			capabilities->hopper = inputPacket.data[i + 1];
-			break;
+		}
+		break;
 		case CAP_GPO:
+		{
 			capabilities->generalPurposeOutputs = inputPacket.data[i + 1];
-			break;
+		}
+		break;
 		case CAP_ANALOG_OUT:
+		{
 			capabilities->analogueOutChannels = inputPacket.data[i + 1];
-			break;
+		}
+		break;
 		case CAP_DISPLAY:
+		{
 			capabilities->displayOutColumns = inputPacket.data[i + 1];
 			capabilities->displayOutRows = inputPacket.data[i + 2];
 			capabilities->displayOutEncodings = inputPacket.data[i + 3];
-			break;
+		}
+		break;
 		case CAP_BACKUP:
+		{
 			capabilities->backup = 1;
-			break;
+		}
+		break;
 		}
 		i += 4;
 	}
@@ -295,12 +406,6 @@ int runCommand(JVSPacket *outputPacket, JVSPacket *inputPacket)
 			continue;
 		}
 
-		if (inputPacket->data[1] != REPORT_SUCCESS)
-		{
-			printf("Report Error - Error with this command in particular");
-			timeout--;
-			continue;
-		}
 		usleep(10 * 1000);
 
 		return 1;
@@ -457,4 +562,15 @@ JVSStatus writePacket(JVSPacket *packet)
 	}
 
 	return JVS_STATUS_SUCCESS;
+}
+
+/**
+ * Get the amount of switch bytes per player
+ * 
+ * Returns the amount of space in bytes that needs to
+ * be allocated to hold all of the switch data
+ */
+unsigned char getSwitchBytesPerPlayer()
+{
+	return switchBytesPerPlayer;
 }

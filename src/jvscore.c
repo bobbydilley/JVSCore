@@ -62,9 +62,9 @@ int main()
     }
 
     printf("Device Connected: %s\n", name);
-    if(capabilities.players > 0)
+    if (capabilities.players > 0)
         printf("  Players: %d\n", capabilities.players);
-    if(capabilities.switches > 0)
+    if (capabilities.switches > 0)
         printf("  Switches Per Player: %d\n", capabilities.switches);
     if (capabilities.coins > 0)
         printf("  Coins: %d\n", capabilities.coins);
@@ -97,53 +97,54 @@ int main()
         return EXIT_FAILURE;
     }
 
-    div_t switchDiv = div(capabilities.switches, 8);
-    int switchBytes = switchDiv.quot + (switchDiv.rem ? 1 : 0);
-
     sleep(1);
+
+    unsigned char coins[capabilities.coins];
+    unsigned char switches[getSwitchBytesPerPlayer() * capabilities.players + 1];
+    int analogues[2 * capabilities.analogueInChannels];
 
     int running = 1;
     while (running)
     {
         /* Get coins */
-        if(capabilities.coins > 0) {
-            char coins[1];
+        if (capabilities.coins > 0)
+        {
             if (!getCoins(coins, capabilities.coins))
             {
                 printf("Error getting coins, closing.\n");
                 break;
             }
+
+            for (int i = 0; i < capabilities.coins; i++)
+            {
+                if (coins[i] > 0)
+                {
+                    emitCoinPress(i);
+                    decreaseCoins(coins[i], (unsigned char)i);
+                }
+            }
         }
 
         /* Get and update the switches */
-        if(capabilities.switches > 0) {
-            char switches[switchBytes * capabilities.players + 1];
-            if (!getSwitches(switches, capabilities.players, switchBytes))
+        if (capabilities.switches > 0)
+        {
+            if (!getSwitches(switches, capabilities.players))
             {
                 printf("Error getting switches, closing.\n");
                 break;
             }
             updateSwitches(switches);
         }
-        
+
         /* Get and update the analogue channels */
-        if(capabilities.analogueInChannels > 0) {
-            char analogues[2 * capabilities.analogueInChannels];
+        if (capabilities.analogueInChannels > 0)
+        {
             if (!getAnalogue(analogues, capabilities.analogueInChannels))
             {
                 printf("Error getting analogues, closing.\n");
                 break;
             }
             updateAnalogues(analogues);
-        }
-
-        /* Get and update the gun positions */
-        if(capabilities.gunChannels > 0) {
-            int gunPosition[2];
-            if(!getLightGun(gunPosition, 0)) {
-                printf("Error getting gun position, closing.\n");
-                break;
-            }
         }
 
         /* Send the updates to the computer */

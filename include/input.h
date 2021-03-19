@@ -16,8 +16,9 @@
 
 int initInput(JVSCapabilities *sentCapabilities, char *name, int analogueFuzz);
 int closeInput();
-int updateSwitches(char *switches);
-int updateAnalogues(char *analogues);
+int updateSwitches(unsigned char *switches);
+int updateAnalogues(int *analogues);
 int sendUpdate();
+int emitCoinPress(unsigned char slot);
 
 #endif // INPUT_H_

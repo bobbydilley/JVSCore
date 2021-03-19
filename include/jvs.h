@@ -62,13 +62,14 @@ int runCommand(JVSPacket *packet, JVSPacket *returnedPacket);
 
 int resetJVS();
 int getCapabilities(JVSCapabilities *capabilities);
-int getSwitches(char *switches, int players, int bytes);
-int getAnalogue(char *analogues, int channels);
-int getLightGun(int *gunPosition, unsigned char player);
-int getCoins(unsigned char *coins, int slot);
+int getSwitches(unsigned char *switches, int players);
+int getAnalogue(int *analogues, int channels);
+int getCoins(unsigned char *coins, unsigned char slots);
+int decreaseCoins(unsigned char amount, unsigned char slot);
+int getSupported(JVSCapabilities *capabilities, unsigned char *coins, unsigned char *switches, unsigned char *analogues);
 int getName(char *name);
 int getJVSVersion();
 int getCommsVersion();
-int getCoins();
+unsigned char getSwitchBytesPerPlayer();
 
 #endif // JVS_H_

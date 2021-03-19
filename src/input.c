@@ -19,7 +19,8 @@
 
 #include "input.h"
 
-int switchMappings[] = {KEY_A, KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G, KEY_H, BTN_DPAD_UP, BTN_DPAD_DOWN, BTN_DPAD_LEFT, BTN_DPAD_RIGHT, BTN_1, BTN_2, BTN_3, BTN_4, BTN_5, BTN_NORTH, BTN_EAST, BTN_SOUTH, BTN_WEST, BTN_A, BTN_B, BTN_C};
+/* Use -1 if you don't want that switch to be mapped */
+int switchMappings[] = {KEY_F1, KEY_F2, -1, -1, -1, -1, -1, -1, BTN_START, KEY_F2, BTN_DPAD_UP, BTN_DPAD_DOWN, BTN_DPAD_LEFT, BTN_DPAD_RIGHT, BTN_1, BTN_2, BTN_3, BTN_4, BTN_5, BTN_NORTH, BTN_EAST, BTN_SOUTH, BTN_WEST, BTN_A, BTN_B, BTN_C};
 int analogueMappings[] = {ABS_X, ABS_Y, ABS_Z, ABS_RZ, ABS_RX, ABS_RY, ABS_GAS, ABS_BRAKE, ABS_WHEEL};
 
 JVSCapabilities *capabilities;
@@ -58,9 +59,15 @@ int initInput(JVSCapabilities *sentCapabilities, char *name, int analogueFuzz)
     ioctl(fd, UI_SET_EVBIT, EV_KEY);
     for (int i = 0; i < (8 * switchBytes) * capabilities->players + 8; i++)
     {
-        if(i < maxSwitchMappings) {
-            ioctl(fd, UI_SET_KEYBIT, switchMappings[i]);
-        } else {
+        if (i < maxSwitchMappings)
+        {
+            if (switchMappings[i] != -1)
+            {
+                ioctl(fd, UI_SET_KEYBIT, switchMappings[i]);
+            }
+        }
+        else
+        {
             ioctl(fd, UI_SET_KEYBIT, 2 + i);
         }
     }
@@ -101,16 +108,22 @@ int closeInput()
     return close(fd);
 }
 
-int updateSwitches(char *switches)
+int updateSwitches(unsigned char *switches)
 {
     for (int i = 0; i < switchBytes * capabilities->players + 1; i++)
     {
         for (int j = 7; 0 <= j; j--)
         {
             int switchNumber = (i * 8) + j;
-            if(switchNumber < maxSwitchMappings) {
-                emit(fd, EV_KEY, switchMappings[i], (switches[i] >> j) & 0x01);
-            } else {
+            if (switchNumber < maxSwitchMappings)
+            {
+                if (switchMappings[i] != -1)
+                {
+                    emit(fd, EV_KEY, switchMappings[i], (switches[i] >> j) & 0x01);
+                }
+            }
+            else
+            {
                 emit(fd, EV_KEY, 2 + switchNumber, (switches[i] >> j) & 0x01);
             }
         }
@@ -118,12 +131,22 @@ int updateSwitches(char *switches)
     return 1;
 }
 
-int updateAnalogues(char *analogues)
+int updateAnalogues(int *analogues)
 {
     for (int i = 0; i < capabilities->analogueInChannels; i++)
     {
         emit(fd, EV_ABS, i, ((analogues[(i * 2) + 1] & 0xFF) << (capabilities->analogueInChannels - 8)) + (analogues[(i * 2)] & 0xFF));
     }
+    return 1;
+}
+
+int emitCoinPress(unsigned char slot)
+{
+    int key = KEY_5 + (int)slot;
+    emit(fd, EV_KEY, key, 1);
+    sendUpdate();
+    emit(fd, EV_KEY, key, 0);
+    sendUpdate();
     return 1;
 }
 
