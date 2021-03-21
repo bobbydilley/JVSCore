@@ -101,49 +101,37 @@ int main()
 
     unsigned char coins[capabilities.coins];
     unsigned char switches[getSwitchBytesPerPlayer() * capabilities.players + 1];
-    int analogues[2 * capabilities.analogueInChannels];
+    int analogues[capabilities.analogueInChannels];
 
     int running = 1;
     while (running)
     {
-        /* Get coins */
-        if (capabilities.coins > 0)
+        /* Request all supported functions from the JVS IO */
+        if (!getSupported(&capabilities, coins, switches, analogues))
         {
-            if (!getCoins(coins, capabilities.coins))
-            {
-                printf("Error getting coins, closing.\n");
-                break;
-            }
+            printf("Error: Failed to request from the JVS IO\n");
+            running = 0;
+        }
 
-            for (int i = 0; i < capabilities.coins; i++)
+        /* See if we need to press any keys for a coin update */
+        for (int i = 0; i < capabilities.coins; i++)
+        {
+            if (coins[i] > 0)
             {
-                if (coins[i] > 0)
-                {
-                    emitCoinPress(i);
-                    decreaseCoins(coins[i], (unsigned char)i);
-                }
+                emitCoinPress(i);
+                decreaseCoins(coins[i], (unsigned char)i + 1);
             }
         }
 
-        /* Get and update the switches */
+        /* Update the switches */
         if (capabilities.switches > 0)
         {
-            if (!getSwitches(switches, capabilities.players))
-            {
-                printf("Error getting switches, closing.\n");
-                break;
-            }
             updateSwitches(switches);
         }
 
-        /* Get and update the analogue channels */
+        /* Update the analogue channels */
         if (capabilities.analogueInChannels > 0)
         {
-            if (!getAnalogue(analogues, capabilities.analogueInChannels))
-            {
-                printf("Error getting analogues, closing.\n");
-                break;
-            }
             updateAnalogues(analogues);
         }
 
@@ -153,5 +141,5 @@ int main()
 
     closeInput();
 
-    return 0;
+    return EXIT_FAILURE;
 }

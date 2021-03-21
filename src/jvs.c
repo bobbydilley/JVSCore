@@ -65,28 +65,6 @@ int resetJVS()
 	return 1;
 }
 
-int getSwitches(unsigned char *switches, int players)
-{
-	outputPacket.destination = DEVICE_ID;
-
-	unsigned char data[] = {CMD_READ_SWITCHES, players, getSwitchBytesPerPlayer()};
-	outputPacket.length = 3;
-	memcpy(outputPacket.data, data, outputPacket.length);
-	if (!runCommand(&outputPacket, &inputPacket))
-	{
-		printf("Failed to send switches question to device\n");
-		return 0;
-	}
-
-	int i = 2;
-	while (i < inputPacket.length)
-	{
-		switches[i - 2] = inputPacket.data[i];
-		i++;
-	}
-	return 1;
-}
-
 /**
  * Query all supported commands from the JVS IO
  * 
@@ -99,7 +77,7 @@ int getSwitches(unsigned char *switches, int players)
  * @param switches A pointer to the switches variable to hold the switch data in
  * @param analogues A pointer to the analogues variable to hold the analogue data in
  */
-int getSupported(JVSCapabilities *capabilities, unsigned char *coins, unsigned char *switches, unsigned char *analogues)
+int getSupported(JVSCapabilities *capabilities, unsigned char *coins, unsigned char *switches, int *analogues)
 {
 	outputPacket.destination = DEVICE_ID;
 	outputPacket.length = 0;
@@ -169,52 +147,6 @@ int getSupported(JVSCapabilities *capabilities, unsigned char *coins, unsigned c
 	return 1;
 }
 
-int getAnalogue(int *analogues, int channels)
-{
-	outputPacket.destination = DEVICE_ID;
-
-	unsigned char data[] = {CMD_READ_ANALOGS, channels};
-	outputPacket.length = 2;
-	memcpy(outputPacket.data, data, outputPacket.length);
-	if (!runCommand(&outputPacket, &inputPacket))
-	{
-		printf("Failed to send analogue question to device\n");
-		return 0;
-	}
-
-	int i = 2;
-	while (i < inputPacket.length)
-	{
-		analogues[i - 2] = inputPacket.data[i] << 8 | inputPacket.data[i + 1];
-		i += 2;
-	}
-	return 1;
-}
-
-int getCoins(unsigned char *coins, unsigned char slots)
-{
-	outputPacket.destination = DEVICE_ID;
-
-	unsigned char data[] = {CMD_READ_COINS, slots};
-	outputPacket.length = 2;
-	memcpy(outputPacket.data, data, outputPacket.length);
-	if (!runCommand(&outputPacket, &inputPacket))
-	{
-		printf("Failed to send coins question to device\n");
-		return 0;
-	}
-
-	int i = 2;
-	int coinCounter = 0;
-	while (i < inputPacket.length)
-	{
-		coins[coinCounter++] = inputPacket.data[i + 1];
-		i += 2;
-	}
-
-	return 1;
-}
-
 int decreaseCoins(unsigned char amount, unsigned char slot)
 {
 	outputPacket.destination = DEVICE_ID;
@@ -225,6 +157,22 @@ int decreaseCoins(unsigned char amount, unsigned char slot)
 	if (!runCommand(&outputPacket, &inputPacket))
 	{
 		printf("Failed to send decrease coins command to device\n");
+		return 0;
+	}
+
+	return 1;
+}
+
+int increaseCoins(unsigned char amount, unsigned char slot)
+{
+	outputPacket.destination = DEVICE_ID;
+
+	unsigned char data[] = {CMD_INCREASE_COINS, slot, 0x00, amount};
+	outputPacket.length = 4;
+	memcpy(outputPacket.data, data, outputPacket.length);
+	if (!runCommand(&outputPacket, &inputPacket))
+	{
+		printf("Failed to send increase coins command to device\n");
 		return 0;
 	}
 

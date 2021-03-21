@@ -96,13 +96,13 @@ int readBytes(unsigned char *buffer, int amount)
 
     int filesReadyToRead = select(serialIO + 1, &fd_serial, NULL, NULL, &tv);
 
-    if (filesReadyToRead < 1) {
-        printf("Reading failed\n");
+    if (filesReadyToRead < 1)
+    {
         return -1;
     }
 
-    if (!FD_ISSET(serialIO, &fd_serial)) {
-        printf("Reading failed\n");
+    if (!FD_ISSET(serialIO, &fd_serial))
+    {
         return -1;
     }
 
@@ -112,10 +112,4 @@ int readBytes(unsigned char *buffer, int amount)
 int writeBytes(unsigned char *buffer, int amount)
 {
     return write(serialIO, buffer, amount);
-}
-
-int drain()
-{
-    usleep(100 * 1000);
-    return tcflush(serialIO, TCIOFLUSH);
 }
