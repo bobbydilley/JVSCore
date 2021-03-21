@@ -1,7 +1,5 @@
 [![Actions Status](https://github.com/bobbydilley/JVSCore-Public/workflows/Build/badge.svg)](https://github.com/bobbydilley/JVSCore-Public/actions)
 
-# THIS BRANCH IS UNTESTED!!!!! IT PROBABLY WONT WORK SO DONT COPY IT YET!!
-
 # JVSCore
 
 JVSCore is a user space driver for using JVS I/O boards with Linux. It requires a USB RS485 converter wired to the JVS I/O.
@@ -24,37 +22,6 @@ make
 sudo make install
 ```
 
-## Mapping
-
-The keys are mapped to the standard MAME outputs, if you'd like to change them you can in src/input.c.
-
-The order of keys from JVS is as follows:
-
-[SYSTEM]
-TEST
-TILT1
-TILT2
-TILT3
-TILT4
-TILT5
-TILT6
-TILT7
-[PLAYER 1]
-START
-SERVICE
-UP
-DOWN
-LEFT
-RIGHT
-1
-2
-3
-4
-5
-...
-[PLAYER 2]
-REPEATED AS PLAYER 1
-
 ## Cable
 
 I'd recommend watching the below video from the TecknoGods about how to create a JVS cable.
@@ -66,7 +33,7 @@ https://www.youtube.com/watch?v=kqXEYtvGzno
 |---|---|
 |B-|DATA- (White)|
 |A+|DATA+ (Green)|
-|GND|VCC (Red)|
+|Not Required|VCC (Red)|
 |GND|GND (Black)|
 
 ## Command Line Usage
