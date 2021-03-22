@@ -73,29 +73,29 @@ int resetJVS()
  * than querying individual packets
  * 
  * @param capabilities The capabilities to check from
- * @param coins A pointer to the coins variable to hold the coins in
- * @param switches A pointer to the switches variable to hold the switch data in
- * @param analogues A pointer to the analogues variable to hold the analogue data in
+ * @param coins A pointer to the coins variable to hold the coins in, or NULL to skip this capability
+ * @param switches A pointer to the switches variable to hold the switch data in, or NULL to skip this capability
+ * @param analogues A pointer to the analogues variable to hold the analogue data in, or NULL to skip this capability
  */
 int getSupported(JVSCapabilities *capabilities, unsigned char *coins, unsigned char *switches, int *analogues)
 {
 	outputPacket.destination = DEVICE_ID;
 	outputPacket.length = 0;
 
-	if (capabilities->coins)
+	if (coins != NULL && capabilities->coins)
 	{
 		outputPacket.data[outputPacket.length++] = CMD_READ_COINS;
 		outputPacket.data[outputPacket.length++] = capabilities->coins;
 	}
 
-	if (capabilities->switches)
+	if (switches != NULL && capabilities->switches)
 	{
 		outputPacket.data[outputPacket.length++] = CMD_READ_SWITCHES;
 		outputPacket.data[outputPacket.length++] = capabilities->players;
 		outputPacket.data[outputPacket.length++] = 2;
 	}
 
-	if (capabilities->analogueInChannels)
+	if (analogues != NULL && capabilities->analogueInChannels)
 	{
 		outputPacket.data[outputPacket.length++] = CMD_READ_ANALOGS;
 		outputPacket.data[outputPacket.length++] = capabilities->analogueInChannels;
@@ -109,7 +109,7 @@ int getSupported(JVSCapabilities *capabilities, unsigned char *coins, unsigned c
 
 	unsigned char packetPointer = 1;
 
-	if (capabilities->coins)
+	if (coins != NULL && capabilities->coins)
 	{
 		if (inputPacket.data[packetPointer++] != REPORT_SUCCESS)
 			printf("Coin question did not report success\n");
@@ -121,7 +121,7 @@ int getSupported(JVSCapabilities *capabilities, unsigned char *coins, unsigned c
 		}
 	}
 
-	if (capabilities->switches)
+	if (switches != NULL && capabilities->switches)
 	{
 		if (inputPacket.data[packetPointer++] != REPORT_SUCCESS)
 			printf("Switch question did not report success\n");
@@ -132,7 +132,7 @@ int getSupported(JVSCapabilities *capabilities, unsigned char *coins, unsigned c
 		}
 	}
 
-	if (capabilities->analogueInChannels)
+	if (analogues != NULL && capabilities->analogueInChannels)
 	{
 		if (inputPacket.data[packetPointer++] != REPORT_SUCCESS)
 			printf("Analogue question did not report success\n");

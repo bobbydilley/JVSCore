@@ -5,26 +5,28 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  **/
 
-#include <linux/uinput.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <termios.h>
-#include <unistd.h>
-#include <time.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <stdio.h>
+#include <linux/uinput.h>
 #include <math.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <termios.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "input.h"
 
-JVSCapabilities *capabilities;
-int switchBytes = -1;
-int fd = -1;
-struct uinput_user_dev usetup;
-
+/* Reserve spaces for coin buttons at the start of the mapping */
 #define COIN_KEYS 5
+#define SYSTEM_KEYS 8
+
+JVSCapabilities *capabilities;
+int fd = -1;
+int switchBytes = -1;
+struct uinput_user_dev usetup;
 
 void emit(int fd, int type, int code, int val)
 {
@@ -40,6 +42,16 @@ void emit(int fd, int type, int code, int val)
     write(fd, &ie, sizeof(ie));
 }
 
+/**
+ * Create a new input device
+ * 
+ * Creates a new input device from the JVSCapabilities string that is sent.
+ * Currently only creates switches coins and analogues.
+ * 
+ * @param sendCapabilities The capabilities object to create the device from
+ * @param name The name to give the input device in linux
+ * @param analogueFuzz The amount that the analogue channel must differ by before a report is sent.
+ */
 int initInput(JVSCapabilities *sentCapabilities, char *name, int analogueFuzz)
 {
     capabilities = sentCapabilities;
@@ -49,10 +61,10 @@ int initInput(JVSCapabilities *sentCapabilities, char *name, int analogueFuzz)
     fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
 
     ioctl(fd, UI_SET_EVBIT, EV_KEY);
-    for (int i = 0; i < (8 * switchBytes) * capabilities->players + 8; i++)
+    for (int i = 0; i < (8 * switchBytes) * capabilities->players + SYSTEM_KEYS + COIN_KEYS; i++)
     {
 
-        ioctl(fd, UI_SET_KEYBIT, 2 + COIN_KEYS + i);
+        ioctl(fd, UI_SET_KEYBIT, 2 + i);
     }
 
     ioctl(fd, UI_SET_EVBIT, EV_ABS);
@@ -85,25 +97,46 @@ int initInput(JVSCapabilities *sentCapabilities, char *name, int analogueFuzz)
     return 1;
 }
 
+/**
+ * Close the input device
+ * 
+ * Closes the input device to linux
+ */
 int closeInput()
 {
     ioctl(fd, UI_DEV_DESTROY);
     return close(fd);
 }
 
+/**
+ * Sends an update of the switches to linux
+ * 
+ * Given a raw bit array taken straight from the JVS IO, this function
+ * will loop through all bits and send appropriate key presses
+ * 
+ * @param switches The raw bit array containing switch values
+ */
 int updateSwitches(unsigned char *switches)
 {
     for (int i = 0; i < switchBytes * capabilities->players + 1; i++)
     {
-        for (int j = 7; 0 <= j; j--)
+        for (int j = 0; j < 8; j++)
         {
             int switchNumber = (i * 8) + j;
-            emit(fd, EV_KEY, 2 + COIN_KEYS + switchNumber, (switches[i] >> j) & 0x01);
+            emit(fd, EV_KEY, 2 + COIN_KEYS + switchNumber, (switches[i] >> (7 - j)) & 0x01);
         }
     }
     return 1;
 }
 
+/**
+ * Sends an update of the analogues to linux
+ * 
+ * Given a raw analogue array taken straight from the JVS IO, this function
+ * will loop through all bytes and send appropriate analogue updates
+ * 
+ * @param switches The raw byte array containing analogue values
+ */
 int updateAnalogues(int *analogues)
 {
     for (int i = 0; i < capabilities->analogueInChannels; i++)
@@ -113,6 +146,14 @@ int updateAnalogues(int *analogues)
     return 1;
 }
 
+/**
+ * Emit a coin press
+ * 
+ * Given a slot this will emit a key press
+ * used for when JVSCore detects a coin
+ * 
+ * @param slot Which slot the coin was inserted into
+ */
 int emitCoinPress(unsigned char slot)
 {
     int key = 2 + (int)slot;
@@ -123,6 +164,12 @@ int emitCoinPress(unsigned char slot)
     return 1;
 }
 
+/**
+ * Report the input device update
+ * 
+ * This is called once every turn to send linux all
+ * of the switch and analogue updates in one go
+ */
 int sendUpdate()
 {
     emit(fd, EV_SYN, SYN_REPORT, 0);
