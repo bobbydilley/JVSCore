@@ -28,6 +28,12 @@ int fd = -1;
 int switchBytes = -1;
 struct uinput_user_dev usetup;
 
+/* Mappings for the key presses */
+int systemKeys[] = {KEY_F2, KEY_F2, KEY_F2, KEY_F2, KEY_F2, KEY_F2, KEY_F2, KEY_F2};
+int coinKeys[] = {KEY_5, KEY_6, KEY_6};
+int playerOneKeys[] = {KEY_1, KEY_9, KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_LEFTCTRL, KEY_LEFTALT, KEY_SPACE, KEY_LEFTSHIFT, KEY_Z, KEY_X, KEY_C, KEY_V, KEY_V, KEY_V};
+int playerTwoKeys[] = {KEY_2, KEY_9, KEY_R, KEY_F, KEY_D, KEY_G, KEY_A, KEY_S, KEY_Q, KEY_W, KEY_I, KEY_J, KEY_J, KEY_L, KEY_L, KEY_L};
+
 void emit(int fd, int type, int code, int val)
 {
     struct input_event ie;
@@ -61,10 +67,24 @@ int initInput(JVSCapabilities *sentCapabilities, char *name, int analogueFuzz)
     fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
 
     ioctl(fd, UI_SET_EVBIT, EV_KEY);
-    for (int i = 0; i < (8 * switchBytes) * capabilities->players + SYSTEM_KEYS + COIN_KEYS; i++)
-    {
 
-        ioctl(fd, UI_SET_KEYBIT, 2 + i);
+    // Enable system keys
+    for (int i = 0; i < 8; i++)
+        ioctl(fd, UI_SET_KEYBIT, systemKeys[i]);
+
+    // Enable coin keys
+    for (int i = 0; i < 2; i++)
+        ioctl(fd, UI_SET_KEYBIT, coinKeys[i]);
+
+    // Enable player one keys
+    for (int i = 0; i < 16; i++)
+        ioctl(fd, UI_SET_KEYBIT, playerOneKeys[i]);
+
+    // Enable player two keys
+    if (capabilities->players > 1)
+    {
+        for (int i = 0; i < 16; i++)
+            ioctl(fd, UI_SET_KEYBIT, playerTwoKeys[i]);
     }
 
     ioctl(fd, UI_SET_EVBIT, EV_ABS);
@@ -118,14 +138,41 @@ int closeInput()
  */
 int updateSwitches(unsigned char *switches)
 {
-    for (int i = 0; i < switchBytes * capabilities->players + 1; i++)
+    int byteCounter = 0;
+
+    // Emit the system buttons
+    for (int i = 0; i < 8; i++)
+        emit(fd, EV_KEY, systemKeys[i], switches[byteCounter] >> (7 - i) & 0x01);
+    byteCounter++;
+
+    // First player buttons
+    for (int i = 0; i < 8; i++)
+        emit(fd, EV_KEY, playerOneKeys[i], switches[byteCounter] >> (7 - i) & 0x01);
+    byteCounter++;
+
+    if (switchBytes > 1)
     {
-        for (int j = 0; j < 8; j++)
-        {
-            int switchNumber = (i * 8) + j;
-            emit(fd, EV_KEY, 2 + COIN_KEYS + switchNumber, (switches[i] >> (7 - j)) & 0x01);
-        }
+        for (int i = 0; i < 8; i++)
+            emit(fd, EV_KEY, playerOneKeys[8 + i], switches[byteCounter] >> (7 - i) & 0x01);
+        byteCounter++;
     }
+
+    // If we only have 1 player, just end here
+    if (capabilities->players == 1)
+        return 1;
+
+    // Second player buttons
+    for (int i = 0; i < 8; i++)
+        emit(fd, EV_KEY, playerTwoKeys[i], switches[byteCounter] >> (7 - i) & 0x01);
+    byteCounter++;
+
+    if (switchBytes > 1)
+    {
+        for (int i = 0; i < 8; i++)
+            emit(fd, EV_KEY, playerTwoKeys[8 + i], switches[byteCounter] >> (7 - i) & 0x01);
+        byteCounter++;
+    }
+
     return 1;
 }
 
@@ -156,10 +203,9 @@ int updateAnalogues(int *analogues)
  */
 int emitCoinPress(unsigned char slot)
 {
-    int key = 2 + (int)slot;
-    emit(fd, EV_KEY, key, 1);
+    emit(fd, EV_KEY, coinKeys[slot], 1);
     sendUpdate();
-    emit(fd, EV_KEY, key, 0);
+    emit(fd, EV_KEY, coinKeys[slot], 0);
     sendUpdate();
     return 1;
 }
