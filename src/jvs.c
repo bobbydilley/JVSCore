@@ -117,7 +117,6 @@ int getSupported(JVSCapabilities *capabilities, unsigned char *coins, unsigned c
 		for (int i = 0; i < capabilities->coins; i++)
 		{
 			coins[i] = inputPacket.data[++packetPointer];
-			printf("Coins %d is %d", i, coins[i]);
 			packetPointer++;
 		}
 	}
