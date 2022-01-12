@@ -2,6 +2,7 @@
  * Author: Bobby Dilley
  * Created: 2019
  * SPDX-FileCopyrightText: 2019 Bobby Dilley <bobby@dilley.uk>
+ * 2022 Contributor and DE10-Nano tester: Javier Rodas (@JaviRodasG) <javier.rodas@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  **/
 
@@ -320,7 +321,7 @@ int runCommand(JVSPacket *outputPacket, JVSPacket *inputPacket)
 			continue;
 		}
 
-		usleep(500);
+//		usleep(500);
 
 		JVSStatus readPacketResponse = readPacket(inputPacket);
 		if (readPacketResponse != JVS_STATUS_SUCCESS)
@@ -354,7 +355,7 @@ int runCommand(JVSPacket *outputPacket, JVSPacket *inputPacket)
 			continue;
 		}
 
-		usleep(10 * 1000);
+//		usleep(10 * 1000);
 
 		return 1;
 	}

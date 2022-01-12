@@ -2,6 +2,7 @@
  * Author: Bobby Dilley
  * Created: 2019
  * SPDX-FileCopyrightText: 2019 Bobby Dilley <bobby@dilley.uk>
+ * 2022 Contributor and DE10-Nano tester: Javier Rodas (@JaviRodasG) <javier.rodas@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  **/
 
@@ -14,7 +15,7 @@ int parseConfig(char *filePath, JVSConfig *jvsConfig)
 {
     // Setup default values
     jvsConfig->analogueFuzz = 2;
-    strcpy(jvsConfig->devicePath, "/dev/ttyUSB0");
+    strcpy(jvsConfig->devicePath, devicePath);
 
     FILE *fp;
     char buffer[1024];
