@@ -2,6 +2,7 @@
  * Author: Bobby Dilley
  * Created: 2019
  * SPDX-FileCopyrightText: 2019 Bobby Dilley <bobby@dilley.uk>
+ * 2022 Contributor and DE10-Nano tester: Javier Rodas (@JaviRodasG) <javier.rodas@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  **/
 
@@ -126,17 +127,19 @@ int main()
         /* Update the switches */
         if (capabilities.switches > 0)
         {
+//            for(int i = 0 ; i < getSwitchBytesPerPlayer() * capabilities.players + 1 ; i++) {
+//                printf("%d ", switches[i]);
+//            }
+//            printf("\n");
             updateSwitches(switches);
+            sendUpdate();
         }
 
         /* Update the analogue channels */
-        if (capabilities.analogueInChannels > 0)
-        {
-            updateAnalogues(analogues);
-        }
-
-        /* Send the updates to the computer */
-        sendUpdate();
+//        if (capabilities.analogueInChannels > 0)
+//        {
+//            updateAnalogues(analogues);
+//        }
     }
 
     closeInput();
