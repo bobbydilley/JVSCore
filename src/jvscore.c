@@ -178,6 +178,7 @@ int main(int argc, char *argv[])
     {
         unsigned char *coinsPointer = NULL;
 
+        /* Only requests the coins once every few polls to speed things up*/
         if (coinRequestCounter < 1)
         {
             coinsPointer = coins;
