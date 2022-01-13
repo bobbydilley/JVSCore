@@ -155,7 +155,6 @@ int main(int argc, char *argv[])
     /* Disable analogue reading if not required */
     if (config.enableAnalogue == 0)
     {
-        printf("Please note, analogue channels have been disabled\n");
         capabilities.analogueInChannels = 0;
         capabilities.analogueInBits = 0;
     }
