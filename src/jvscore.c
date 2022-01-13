@@ -24,10 +24,8 @@
 #include "input.h"
 #include "version.h"
 
-int main()
+int main(int argc, char *argv[])
 {
-    printf("JVSCore Device Driver Version %s\n", PROJECT_VER);
-
     char *configFilePath = "/etc/jvscore.conf";
 
     JVSConfig config = {0};
@@ -35,6 +33,65 @@ int main()
     {
         printf("Failed to open config file at %s, using default values.\n", configFilePath);
     }
+
+    /* Parse arguments */
+    for (int i = 1; i < argc; i++)
+    {
+        if (strcmp(argv[i], "--disable-analogue") == 0)
+        {
+            config.enableAnalogue = 0;
+            continue;
+        }
+
+        if (strcmp(argv[i], "--device-path") == 0)
+        {
+            if (argc < i + 2)
+            {
+                printf("You must specify the device path after --device-path\n");
+                return EXIT_FAILURE;
+            }
+            char *devicePath = argv[++i];
+            if (strlen(devicePath) > MAX_STRING_LENGTH)
+            {
+                printf("Error: The device path length is too long\n");
+                return EXIT_FAILURE;
+            }
+            strcpy(config.devicePath, devicePath);
+            continue;
+        }
+
+        if (strcmp(argv[i], "--analogue-fuzz") == 0)
+        {
+            if (argc < i + 2)
+            {
+                printf("You must specify the fuzz amount after --analogue-fuzz\n");
+                return EXIT_FAILURE;
+            }
+            config.analogueFuzz = atoi(argv[++i]);
+            continue;
+        }
+
+        if (strcmp(argv[i], "--version") == 0)
+        {
+            printf("%s\n", PROJECT_VER);
+            return EXIT_SUCCESS;
+        }
+
+        if (strcmp(argv[i], "--help") != 0)
+        {
+            printf("Unknown argument '%s'\n", argv[i]);
+        }
+
+        printf("Usage: %s [OPTIONS]\n\n", argv[0]);
+        printf("Options:\n");
+        printf("\t--disable-analogue     Disables analogue reading\n");
+        printf("\t--analogue-fuzz        Specifies the analogue fuzz value\n");
+        printf("\t--device-path          Specifies the RS485 device path\n");
+
+        return EXIT_FAILURE;
+    }
+
+    printf("JVSCore Device Driver Version %s\n", PROJECT_VER);
 
     if (!connectJVS(config.devicePath))
     {
@@ -92,6 +149,13 @@ int main()
     if (capabilities.backup > 0)
         printf("  Backup: %d\n", capabilities.backup);
 
+    /* Disable analogue reading if not required */
+    if (config.enableAnalogue == 0)
+    {
+        capabilities.analogueInChannels = 0;
+        capabilities.analogueInBits = 0;
+    }
+
     if (!initInput(&capabilities, name, config.analogueFuzz))
     {
         printf("Failed to initalise inputs\n");
@@ -127,19 +191,16 @@ int main()
         /* Update the switches */
         if (capabilities.switches > 0)
         {
-//            for(int i = 0 ; i < getSwitchBytesPerPlayer() * capabilities.players + 1 ; i++) {
-//                printf("%d ", switches[i]);
-//            }
-//            printf("\n");
             updateSwitches(switches);
-            sendUpdate();
         }
 
         /* Update the analogue channels */
-//        if (capabilities.analogueInChannels > 0)
-//        {
-//            updateAnalogues(analogues);
-//        }
+        if (capabilities.analogueInChannels > 0)
+        {
+            updateAnalogues(analogues);
+        }
+
+        sendUpdate();
     }
 
     closeInput();

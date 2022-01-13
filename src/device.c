@@ -20,7 +20,7 @@
 
 #include "device.h"
 
-#define TIMEOUT_SELECT 200
+#define TIMEOUT_SELECT 800
 
 int serialIO = -1;
 

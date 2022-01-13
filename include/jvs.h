@@ -56,10 +56,6 @@ typedef struct
 } JVSCapabilities;
 
 int connectJVS(char *devicePath);
-JVSStatus readPacket(JVSPacket *packet);
-JVSStatus writePacket(JVSPacket *packet);
-int runCommand(JVSPacket *packet, JVSPacket *returnedPacket);
-
 int resetJVS();
 int getCapabilities(JVSCapabilities *capabilities);
 int decreaseCoins(unsigned char amount, unsigned char slot);

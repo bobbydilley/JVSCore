@@ -18,6 +18,7 @@ typedef struct JVSConfig
 {
     char devicePath[MAX_STRING_LENGTH];
     int analogueFuzz;
+    int enableAnalogue;
 } JVSConfig;
 
 int parseConfig(char *filePath, JVSConfig *jvsConfig);

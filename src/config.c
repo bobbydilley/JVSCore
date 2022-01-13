@@ -10,6 +10,7 @@
 
 char devicePath[2024] = "/dev/ttyUSB0";
 int analogueFuzz = 2;
+int enableAnalogue = 1;
 
 int parseConfig(char *filePath, JVSConfig *jvsConfig)
 {
@@ -44,6 +45,15 @@ int parseConfig(char *filePath, JVSConfig *jvsConfig)
                     if (token[strlen(token) - 1] == '\n')
                         token[strlen(token) - 1] = '\0';
                     jvsConfig->analogueFuzz = atoi(token);
+                }
+
+                /* Grab the Enable Analogue Settings */
+                if (strcmp(token, "ENABLE_ANALOGUE") == 0)
+                {
+                    token = strtok(NULL, " ");
+                    if (token[strlen(token) - 1] == '\n')
+                        token[strlen(token) - 1] = '\0';
+                    jvsConfig->enableAnalogue = atoi(token);
                 }
             }
             fgets(buffer, 1024, fp);
