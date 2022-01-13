@@ -24,6 +24,9 @@
 #include "input.h"
 #include "version.h"
 
+/* Set how many cycles you should wait before requesting coins again */
+#define REQUEST_COINS_EVERY 500
+
 int main(int argc, char *argv[])
 {
     char *configFilePath = "/etc/jvscore.conf";
@@ -152,6 +155,7 @@ int main(int argc, char *argv[])
     /* Disable analogue reading if not required */
     if (config.enableAnalogue == 0)
     {
+        printf("Please note, analogue channels have been disabled\n");
         capabilities.analogueInChannels = 0;
         capabilities.analogueInBits = 0;
     }
@@ -168,23 +172,37 @@ int main(int argc, char *argv[])
     unsigned char switches[getSwitchBytesPerPlayer() * capabilities.players + 1];
     int analogues[capabilities.analogueInChannels];
 
+    int coinRequestCounter = REQUEST_COINS_EVERY;
+
     int running = 1;
     while (running)
     {
+        unsigned char *coinsPointer = NULL;
+
+        if (coinRequestCounter < 1)
+        {
+            coinsPointer = coins;
+            coinRequestCounter = REQUEST_COINS_EVERY;
+        }
+        coinRequestCounter = coinRequestCounter - 1;
+
         /* Request all supported functions from the JVS IO */
-        if (!getSupported(&capabilities, coins, switches, analogues))
+        if (!getSupported(&capabilities, coinsPointer, switches, analogues))
         {
             printf("Error: Failed to request from the JVS IO\n");
             running = 0;
         }
 
         /* See if we need to press any keys for a coin update */
-        for (int i = 0; i < capabilities.coins; i++)
+        if (coinsPointer != NULL)
         {
-            if (coins[i] > 0)
+            for (int i = 0; i < capabilities.coins; i++)
             {
-                emitCoinPress(i);
-                decreaseCoins(coins[i], (unsigned char)i + 1);
+                if (coins[i] > 0)
+                {
+                    emitCoinPress(i);
+                    decreaseCoins(coins[i], (unsigned char)i + 1);
+                }
             }
         }
 

@@ -88,10 +88,15 @@ int initInput(JVSCapabilities *sentCapabilities, char *name, int analogueFuzz)
             ioctl(fd, UI_SET_KEYBIT, playerTwoKeys[i]);
     }
 
-//    ioctl(fd, UI_SET_EVBIT, EV_ABS);
-//    for (int i = 0; i < capabilities->analogueInChannels; i++) {
-//        ioctl(fd, UI_SET_ABSBIT, i);
-//    }
+    // Enable analogue channels
+    if (capabilities->analogueInChannels > 0)
+    {
+        ioctl(fd, UI_SET_EVBIT, EV_ABS);
+        for (int i = 0; i < capabilities->analogueInChannels; i++)
+        {
+            ioctl(fd, UI_SET_ABSBIT, i);
+        }
+    }
 
     memset(&usetup, 0, sizeof(usetup));
     usetup.id.bustype = BUS_USB;
@@ -184,11 +189,13 @@ int updateSwitches(unsigned char *switches)
  * 
  * @param switches The raw byte array containing analogue values
  */
-int updateAnalogues(int *analogues) {
-    for (int i = 0; i < capabilities->analogueInChannels; i++) {
+int updateAnalogues(int *analogues)
+{
+    for (int i = 0; i < capabilities->analogueInChannels; i++)
+    {
         emit(fd, EV_ABS, i, analogues[i] >> (16 - capabilities->analogueInBits));
-        sendUpdate();
     }
+    sendUpdate();
     return 1;
 }
 
@@ -204,7 +211,7 @@ int emitCoinPress(unsigned char slot)
 {
     emit(fd, EV_KEY, coinKeys[slot], 1);
     sendUpdate();
-    usleep(100*1000);
+    usleep(100 * 1000);
     emit(fd, EV_KEY, coinKeys[slot], 0);
     sendUpdate();
     return 1;

@@ -8,15 +8,16 @@
 
 #include "config.h"
 
-char devicePath[2024] = "/dev/ttyUSB0";
-int analogueFuzz = 2;
-int enableAnalogue = 1;
+#define DEFAULT_DEVICE_PATH "/dev/ttyUSB0"
+#define DEFAULT_ANALOGUE_FUZZ 2
+#define DEFAULT_ENABLE_ANALOGUE 1
 
 int parseConfig(char *filePath, JVSConfig *jvsConfig)
 {
     // Setup default values
-    jvsConfig->analogueFuzz = 2;
-    strcpy(jvsConfig->devicePath, devicePath);
+    jvsConfig->analogueFuzz = DEFAULT_ANALOGUE_FUZZ;
+    jvsConfig->enableAnalogue = DEFAULT_ENABLE_ANALOGUE;
+    strcpy(jvsConfig->devicePath, DEFAULT_DEVICE_PATH);
 
     FILE *fp;
     char buffer[1024];
