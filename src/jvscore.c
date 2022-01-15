@@ -2,6 +2,7 @@
  * Author: Bobby Dilley
  * Created: 2019
  * SPDX-FileCopyrightText: 2019 Bobby Dilley <bobby@dilley.uk>
+ * 2022 Contributor and DE10-Nano tester: Javier Rodas (@JaviRodasG) <javier.rodas@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  **/
 
@@ -23,10 +24,11 @@
 #include "input.h"
 #include "version.h"
 
-int main()
-{
-    printf("JVSCore Device Driver Version %s\n", PROJECT_VER);
+/* Set how many cycles you should wait before requesting coins again */
+#define REQUEST_COINS_EVERY 500
 
+int main(int argc, char *argv[])
+{
     char *configFilePath = "/etc/jvscore.conf";
 
     JVSConfig config = {0};
@@ -34,6 +36,65 @@ int main()
     {
         printf("Failed to open config file at %s, using default values.\n", configFilePath);
     }
+
+    /* Parse arguments */
+    for (int i = 1; i < argc; i++)
+    {
+        if (strcmp(argv[i], "--disable-analogue") == 0)
+        {
+            config.enableAnalogue = 0;
+            continue;
+        }
+
+        if (strcmp(argv[i], "--device-path") == 0)
+        {
+            if (argc < i + 2)
+            {
+                printf("You must specify the device path after --device-path\n");
+                return EXIT_FAILURE;
+            }
+            char *devicePath = argv[++i];
+            if (strlen(devicePath) > MAX_STRING_LENGTH)
+            {
+                printf("Error: The device path length is too long\n");
+                return EXIT_FAILURE;
+            }
+            strcpy(config.devicePath, devicePath);
+            continue;
+        }
+
+        if (strcmp(argv[i], "--analogue-fuzz") == 0)
+        {
+            if (argc < i + 2)
+            {
+                printf("You must specify the fuzz amount after --analogue-fuzz\n");
+                return EXIT_FAILURE;
+            }
+            config.analogueFuzz = atoi(argv[++i]);
+            continue;
+        }
+
+        if (strcmp(argv[i], "--version") == 0)
+        {
+            printf("%s\n", PROJECT_VER);
+            return EXIT_SUCCESS;
+        }
+
+        if (strcmp(argv[i], "--help") != 0)
+        {
+            printf("Unknown argument '%s'\n", argv[i]);
+        }
+
+        printf("Usage: %s [OPTIONS]\n\n", argv[0]);
+        printf("Options:\n");
+        printf("\t--disable-analogue     Disables analogue reading\n");
+        printf("\t--analogue-fuzz        Specifies the analogue fuzz value\n");
+        printf("\t--device-path          Specifies the RS485 device path\n");
+
+        return EXIT_FAILURE;
+    }
+
+    printf("JVSCore Device Driver Version %s\n", PROJECT_VER);
 
     if (!connectJVS(config.devicePath))
     {
@@ -91,6 +152,13 @@ int main()
     if (capabilities.backup > 0)
         printf("  Backup: %d\n", capabilities.backup);
 
+    /* Disable analogue reading if not required */
+    if (config.enableAnalogue == 0)
+    {
+        capabilities.analogueInChannels = 0;
+        capabilities.analogueInBits = 0;
+    }
+
     if (!initInput(&capabilities, name, config.analogueFuzz))
     {
         printf("Failed to initalise inputs\n");
@@ -103,23 +171,38 @@ int main()
     unsigned char switches[getSwitchBytesPerPlayer() * capabilities.players + 1];
     int analogues[capabilities.analogueInChannels];
 
+    int coinRequestCounter = REQUEST_COINS_EVERY;
+
     int running = 1;
     while (running)
     {
+        unsigned char *coinsPointer = NULL;
+
+        /* Only requests the coins once every few polls to speed things up*/
+        if (coinRequestCounter < 1)
+        {
+            coinsPointer = coins;
+            coinRequestCounter = REQUEST_COINS_EVERY;
+        }
+        coinRequestCounter = coinRequestCounter - 1;
+
         /* Request all supported functions from the JVS IO */
-        if (!getSupported(&capabilities, coins, switches, analogues))
+        if (!getSupported(&capabilities, coinsPointer, switches, analogues))
         {
             printf("Error: Failed to request from the JVS IO\n");
             running = 0;
         }
 
         /* See if we need to press any keys for a coin update */
-        for (int i = 0; i < capabilities.coins; i++)
+        if (coinsPointer != NULL)
         {
-            if (coins[i] > 0)
+            for (int i = 0; i < capabilities.coins; i++)
             {
-                emitCoinPress(i);
-                decreaseCoins(coins[i], (unsigned char)i + 1);
+                if (coins[i] > 0)
+                {
+                    emitCoinPress(i);
+                    decreaseCoins(coins[i], (unsigned char)i + 1);
+                }
             }
         }
 
@@ -135,7 +218,6 @@ int main()
             updateAnalogues(analogues);
         }
 
-        /* Send the updates to the computer */
         sendUpdate();
     }
 

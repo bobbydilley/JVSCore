@@ -2,19 +2,22 @@
  * Author: Bobby Dilley
  * Created: 2019
  * SPDX-FileCopyrightText: 2019 Bobby Dilley <bobby@dilley.uk>
+ * 2022 Contributor and DE10-Nano tester: Javier Rodas (@JaviRodasG) <javier.rodas@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  **/
 
 #include "config.h"
 
-char devicePath[2024] = "/dev/ttyUSB0";
-int analogueFuzz = 2;
+#define DEFAULT_DEVICE_PATH "/dev/ttyUSB0"
+#define DEFAULT_ANALOGUE_FUZZ 2
+#define DEFAULT_ENABLE_ANALOGUE 1
 
 int parseConfig(char *filePath, JVSConfig *jvsConfig)
 {
     // Setup default values
-    jvsConfig->analogueFuzz = 2;
-    strcpy(jvsConfig->devicePath, "/dev/ttyUSB0");
+    jvsConfig->analogueFuzz = DEFAULT_ANALOGUE_FUZZ;
+    jvsConfig->enableAnalogue = DEFAULT_ENABLE_ANALOGUE;
+    strcpy(jvsConfig->devicePath, DEFAULT_DEVICE_PATH);
 
     FILE *fp;
     char buffer[1024];
@@ -43,6 +46,15 @@ int parseConfig(char *filePath, JVSConfig *jvsConfig)
                     if (token[strlen(token) - 1] == '\n')
                         token[strlen(token) - 1] = '\0';
                     jvsConfig->analogueFuzz = atoi(token);
+                }
+
+                /* Grab the Enable Analogue Settings */
+                if (strcmp(token, "ENABLE_ANALOGUE") == 0)
+                {
+                    token = strtok(NULL, " ");
+                    if (token[strlen(token) - 1] == '\n')
+                        token[strlen(token) - 1] = '\0';
+                    jvsConfig->enableAnalogue = atoi(token);
                 }
             }
             fgets(buffer, 1024, fp);

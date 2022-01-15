@@ -2,6 +2,7 @@
  * Author: Bobby Dilley
  * Created: 2019
  * SPDX-FileCopyrightText: 2019 Bobby Dilley <bobby@dilley.uk>
+ * 2022 Contributor and DE10-Nano tester: Javier Rodas (@JaviRodasG) <javier.rodas@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  **/
 
@@ -32,7 +33,7 @@ struct uinput_user_dev usetup;
 int systemKeys[] = {KEY_F2, KEY_F2, KEY_F2, KEY_F2, KEY_F2, KEY_F2, KEY_F2, KEY_F2};
 int coinKeys[] = {KEY_5, KEY_6, KEY_6};
 int playerOneKeys[] = {KEY_1, KEY_9, KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_LEFTCTRL, KEY_LEFTALT, KEY_SPACE, KEY_LEFTSHIFT, KEY_Z, KEY_X, KEY_C, KEY_V, KEY_V, KEY_V};
-int playerTwoKeys[] = {KEY_2, KEY_9, KEY_R, KEY_F, KEY_D, KEY_G, KEY_A, KEY_S, KEY_Q, KEY_W, KEY_I, KEY_J, KEY_J, KEY_L, KEY_L, KEY_L};
+int playerTwoKeys[] = {KEY_2, KEY_9, KEY_R, KEY_F, KEY_D, KEY_G, KEY_A, KEY_S, KEY_Q, KEY_W, KEY_I, KEY_K, KEY_J, KEY_L, KEY_L, KEY_L};
 
 void emit(int fd, int type, int code, int val)
 {
@@ -87,10 +88,14 @@ int initInput(JVSCapabilities *sentCapabilities, char *name, int analogueFuzz)
             ioctl(fd, UI_SET_KEYBIT, playerTwoKeys[i]);
     }
 
-    ioctl(fd, UI_SET_EVBIT, EV_ABS);
-    for (int i = 0; i < capabilities->analogueInChannels; i++)
+    // Enable analogue channels
+    if (capabilities->analogueInChannels > 0)
     {
-        ioctl(fd, UI_SET_ABSBIT, i);
+        ioctl(fd, UI_SET_EVBIT, EV_ABS);
+        for (int i = 0; i < capabilities->analogueInChannels; i++)
+        {
+            ioctl(fd, UI_SET_ABSBIT, i);
+        }
     }
 
     memset(&usetup, 0, sizeof(usetup));
@@ -190,6 +195,7 @@ int updateAnalogues(int *analogues)
     {
         emit(fd, EV_ABS, i, analogues[i] >> (16 - capabilities->analogueInBits));
     }
+    sendUpdate();
     return 1;
 }
 
@@ -205,6 +211,7 @@ int emitCoinPress(unsigned char slot)
 {
     emit(fd, EV_KEY, coinKeys[slot], 1);
     sendUpdate();
+    usleep(100 * 1000);
     emit(fd, EV_KEY, coinKeys[slot], 0);
     sendUpdate();
     return 1;

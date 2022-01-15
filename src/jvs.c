@@ -2,6 +2,7 @@
  * Author: Bobby Dilley
  * Created: 2019
  * SPDX-FileCopyrightText: 2019 Bobby Dilley <bobby@dilley.uk>
+ * 2022 Contributor and DE10-Nano tester: Javier Rodas (@JaviRodasG) <javier.rodas@gmail.com>
  * SPDX-License-Identifier: GPL-3.0-or-later
  **/
 
@@ -30,6 +31,11 @@ JVSPacket inputPacket, outputPacket;
 
 /* The in and out buffer used to read and write to and from */
 unsigned char outputBuffer[JVS_MAX_PACKET_SIZE], inputBuffer[JVS_MAX_PACKET_SIZE];
+
+/* Define private functions */
+JVSStatus readPacket(JVSPacket *packet);
+JVSStatus writePacket(JVSPacket *packet);
+int runCommand(JVSPacket *packet, JVSPacket *returnedPacket);
 
 int connectJVS(char *devicePath)
 {
@@ -320,8 +326,6 @@ int runCommand(JVSPacket *outputPacket, JVSPacket *inputPacket)
 			continue;
 		}
 
-		usleep(500);
-
 		JVSStatus readPacketResponse = readPacket(inputPacket);
 		if (readPacketResponse != JVS_STATUS_SUCCESS)
 		{
@@ -353,8 +357,6 @@ int runCommand(JVSPacket *outputPacket, JVSPacket *inputPacket)
 			timeout--;
 			continue;
 		}
-
-		usleep(10 * 1000);
 
 		return 1;
 	}
